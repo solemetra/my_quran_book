@@ -1,0 +1,1237 @@
+// ignore_for_file: lines_longer_than_80_chars (will refactor soon)
+
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:my_quran/app/l10n.dart';
+import 'package:my_quran/app/pages/notes_screen.dart';
+
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
+import 'package:my_quran/app/pages/bookmarks_screen.dart';
+import 'package:my_quran/app/services/bookmark_service.dart';
+import 'package:my_quran/app/widgets/settings_sheet.dart';
+import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
+import 'package:my_quran/app/widgets/whats_new_dialog.dart';
+import 'package:my_quran/app/quran_page_text_cache.dart';
+import 'package:my_quran/app/settings_controller.dart';
+import 'package:my_quran/app/font_size_controller.dart';
+import 'package:my_quran/app/services/reading_position_service.dart';
+import 'package:my_quran/app/utils.dart';
+import 'package:my_quran/app/models.dart';
+import 'package:my_quran/app/widgets/navigation_sheet.dart';
+import 'package:my_quran/app/widgets/verse_menu_dialog.dart';
+import 'package:my_quran/app/widgets/search_sheet.dart';
+import 'package:my_quran/app/widgets/pinned_header.dart';
+import 'package:my_quran/quran/quran.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({
+    required this.settingsController,
+    this.initialPosition,
+    super.key,
+  });
+
+  final ReadingPosition? initialPosition;
+  final SettingsController settingsController;
+
+  @override
+  HomePageState createState() => HomePageState();
+}
+
+class HomePageState extends State<HomePage> with WidgetsBindingObserver {
+  late final ValueNotifier<({int surah, int verse})?> _highlightedVerseNotifier;
+
+  final ItemScrollController _itemScrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
+
+  /// Key attached to an inline sentinel [WidgetSpan] at the highlighted verse.
+  /// Used by [Scrollable.ensureVisible] to scroll to the verse's exact pixel
+  /// position, which is accurate regardless of font size.
+  final GlobalKey _highlightedBlockKey = GlobalKey();
+
+  late final FontSizeController _fontSizeController = FontSizeController();
+
+  double _scaleFactor = 1;
+  double _baseScale = 1;
+
+  late final ValueNotifier<ReadingPosition> _currentPositionNotifier;
+  late final _pageController = PageController(
+    initialPage: (widget.initialPosition?.pageNumber ?? 1) - 1,
+  );
+
+  /// Used to keep track of current scroll mode
+  late bool _isHorizontalScrolling =
+      widget.settingsController.isHorizontalScrolling;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    Quran.instance.data.addListener(_onQuranDataChanged);
+    _currentPositionNotifier = ValueNotifier(
+      widget.initialPosition ??
+          const ReadingPosition(
+            pageNumber: 1,
+            surahNumber: 1,
+            verseNumber: 1,
+            juzNumber: 1,
+            hizbNumber: 1,
+            hizbQuarter: 1,
+          ),
+    );
+    _highlightedVerseNotifier = ValueNotifier(
+      widget.initialPosition != null
+          ? (
+              surah: widget.initialPosition!.surahNumber,
+              verse: widget.initialPosition!.verseNumber,
+            )
+          : null,
+    );
+
+    _itemPositionsListener.itemPositions.addListener(_onScrollUpdate);
+    widget.settingsController.addListener(_onScrollingModeChanged);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WhatsNewDialog.showIfNeeded(context);
+    });
+    _fontSizeController.addListener(() => setState(() {}));
+  }
+
+  late final ValueNotifier<int> bookmarkRevision = ValueNotifier(0);
+  bool _isLandscape = false;
+  bool _showHeader = true;
+
+  void _onScrollingModeChanged() {
+    final newIsHorizontalScrolling =
+        widget.settingsController.isHorizontalScrolling;
+
+    if (newIsHorizontalScrolling == _isHorizontalScrolling) return;
+
+    setState(() {
+      _isHorizontalScrolling = newIsHorizontalScrolling;
+    });
+
+    unawaited(_syncScrollModePosition(newIsHorizontalScrolling));
+  }
+
+  Future<void> _syncScrollModePosition(bool isHorizontal) async {
+    final targetIndex = _currentPositionNotifier.value.pageNumber - 1;
+
+    for (int i = 0; i < 3; i++) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+
+      if (isHorizontal) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(targetIndex);
+          return;
+        }
+      } else {
+        if (_itemScrollController.isAttached) {
+          _itemScrollController.jumpTo(index: targetIndex);
+          return;
+        }
+      }
+    }
+  }
+
+  void _onQuranDataChanged() {
+    QuranPageTextCache.instance.invalidateForNewQuranData();
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      ReadingPositionService.savePosition(_currentPositionNotifier.value);
+    }
+  }
+
+  void _onScrollUpdate() {
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isEmpty) return;
+
+    ItemPosition? bestCandidate;
+
+    for (final pos in positions) {
+      if (bestCandidate == null || pos.index < bestCandidate.index) {
+        if (pos.itemTrailingEdge > 0.15) {
+          bestCandidate = pos;
+        }
+      }
+    }
+
+    if (bestCandidate == null) {
+      // Fallback: find minimum index
+      int minIndex = positions.first.index;
+      for (final pos in positions) {
+        if (pos.index < minIndex) minIndex = pos.index;
+      }
+      bestCandidate = positions.firstWhere((p) => p.index == minIndex);
+    }
+
+    final newPageNumber = bestCandidate.index + 1;
+
+    // Only update state if changed to prevent rebuilds
+    if (_currentPositionNotifier.value.pageNumber != newPageNumber) {
+      _updateReadingPosition(newPageNumber);
+    }
+  }
+
+  void _updateReadingPosition(int pageNumber) {
+    final pageData = Quran.instance.getPageData(pageNumber);
+    if (pageData.isNotEmpty) {
+      final firstSurah = pageData.first;
+      final surahNum = firstSurah['surah']!;
+      final verseNum = firstSurah['start']!;
+      _currentPositionNotifier.value = ReadingPosition(
+        pageNumber: pageNumber,
+        surahNumber: surahNum,
+        verseNumber: verseNum,
+        juzNumber: Quran.instance.getJuzNumber(surahNum, verseNum),
+        hizbNumber: Quran.instance.getHizbNumber(surahNum, verseNum),
+        hizbQuarter: Quran.instance.getHizbQuarter(surahNum, verseNum),
+      );
+    }
+  }
+
+  Future<void> _jumpToPage(
+    int pageNumber, {
+    int? highlightSurah,
+    int? highlightVerse,
+  }) async {
+    // 1. Set Highlight State
+    if (highlightSurah != null && highlightVerse != null) {
+      _highlightedVerseNotifier.value = (
+        surah: highlightSurah,
+        verse: highlightVerse,
+      );
+    } else {
+      _highlightedVerseNotifier.value = null;
+    }
+
+    _updateReadingPosition(pageNumber);
+
+    final index = (pageNumber - 1).clamp(0, Quran.totalPagesCount - 1);
+
+    // 2. Jump to the correct page first
+    if (widget.settingsController.isHorizontalScrolling) {
+      _pageController.jumpToPage(index);
+    } else {
+      _itemScrollController.jumpTo(index: index);
+    }
+
+    // 3. After the page renders, scroll to the highlighted verse block.
+    if (highlightSurah != null && highlightVerse != null) {
+      unawaited(_scrollToHighlightedVerse(highlightVerse));
+    }
+  }
+
+  Future<void> _scrollToHighlightedVerse(int highlightVerse) async {
+    for (int i = 0; i < 2; i++) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+
+      final ctx = _highlightedBlockKey.currentContext;
+      if (ctx == null || !ctx.mounted) continue;
+
+      final isFirstSurahVerse = highlightVerse == 1;
+      final double alignment = isFirstSurahVerse
+          ? widget.settingsController.isHorizontalScrolling
+                ? 1
+                : 0.6
+          : 0.25;
+      await Scrollable.ensureVisible(
+        ctx,
+        alignment: alignment,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+      return;
+    }
+  }
+
+  // Helper to handle manual tap selection
+  void _onVerseTapped(int surah, int verse) {
+    final curr = _highlightedVerseNotifier.value;
+    if (curr?.surah == surah && curr?.verse == verse) {
+      _highlightedVerseNotifier.value = null;
+    } else {
+      _highlightedVerseNotifier.value = (surah: surah, verse: verse);
+    }
+  }
+
+  void _showThemePicker(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'المظهر',
+                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListenableBuilder(
+                  listenable: widget.settingsController,
+                  builder: (context, _) {
+                    return ThemeTilesPicker(
+                      selected: widget.settingsController.appTheme,
+                      onChanged: (theme) {
+                        widget.settingsController.appTheme = theme;
+                        Navigator.pop(ctx);
+                      },
+                      supportsDynamic:
+                          widget.settingsController.supportsDynamicColor,
+                      deviceLightScheme:
+                          widget.settingsController.deviceLightScheme,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateSystemUI();
+  }
+
+  void _updateSystemUI() {
+    if (_isLandscape) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+  }
+
+  @override
+  void dispose() {
+    // Restore system UI when leaving the screen
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _highlightedVerseNotifier.dispose();
+    _pageController.dispose();
+    ReadingPositionService.savePosition(_currentPositionNotifier.value);
+    _itemPositionsListener.itemPositions.removeListener(_onScrollUpdate);
+    WidgetsBinding.instance.removeObserver(this);
+    _currentPositionNotifier.dispose();
+    Quran.instance.data.removeListener(_onQuranDataChanged);
+    widget.settingsController.removeListener(_onScrollingModeChanged);
+    _fontSizeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 1. Calculate Heights
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+    const double appBarHeight = kToolbarHeight;
+    const double infoHeaderHeight = 35;
+
+    final newIsLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape &&
+        (!kIsWeb && (Platform.isAndroid || Platform.isIOS));
+    if (newIsLandscape != _isLandscape) {
+      _isLandscape = newIsLandscape;
+      _updateSystemUI();
+    }
+    double totalTopHeaderHeight = statusBarHeight;
+    if (!_isLandscape) {
+      totalTopHeaderHeight += appBarHeight;
+    }
+    if (_showHeader || !_isLandscape) {
+      totalTopHeaderHeight += infoHeaderHeight;
+    }
+
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final appBarDecoration = BoxDecoration(
+      color: isDarkMode && widget.settingsController.useTrueBlackBgColor
+          ? Colors.black
+          : Theme.of(context).colorScheme.surfaceContainerLow,
+      border: Border(
+        bottom: BorderSide(
+          color: Theme.of(context).colorScheme.outlineVariant.applyOpacity(0.3),
+        ),
+      ),
+    );
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      backgroundColor:
+          isDarkMode && widget.settingsController.useTrueBlackBgColor
+          ? Colors.black
+          : null,
+      floatingActionButton: _isLandscape
+          ? null
+          : FloatingActionButton(
+              backgroundColor: context.colorScheme.surfaceContainer,
+              foregroundColor: context.colorScheme.primary,
+              elevation: 4,
+              onPressed: () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                useSafeArea: true,
+                constraints: const BoxConstraints(maxHeight: 600),
+                builder: (_) => QuranNavigationBottomSheet(
+                  settingsController: widget.settingsController,
+                  initialPage: _currentPositionNotifier.value.pageNumber,
+                  onNavigate:
+                      ({required page, required surah, required verse}) =>
+                          _jumpToPage(
+                            page,
+                            highlightSurah: surah,
+                            highlightVerse: verse,
+                          ),
+                ),
+              ),
+              child: const Icon(Icons.menu_book_outlined),
+            ),
+      // --- 1. The Glass App Bar ---
+      appBar: _isLandscape
+          ? null
+          : AppBar(
+              systemOverlayStyle: isDarkMode
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark,
+              titleSpacing: 0,
+              title: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () => showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      useSafeArea: true,
+                      showDragHandle: true,
+                      builder: (_) => QuranSearchBottomSheet(
+                        language: widget.settingsController.language,
+                        verseFontFamily: widget.settingsController.fontFamily,
+                        onNavigateToPage: (page, {surah, verse}) => _jumpToPage(
+                          page,
+                          highlightSurah: surah,
+                          highlightVerse: verse,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.bookmark_border),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (_) => BookmarksScreen(
+                            onBookmarkChanged: () => bookmarkRevision.value++,
+                            settingsController: widget.settingsController,
+                            onNavigateToPage:
+                                ({
+                                  required page,
+                                  required surah,
+                                  required verse,
+                                }) => _jumpToPage(
+                                  page,
+                                  highlightSurah: surah,
+                                  highlightVerse: verse,
+                                ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.note_alt_outlined),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (_) => const NotesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              flexibleSpace: Container(decoration: appBarDecoration),
+              actions: [
+                IconButton(
+                  onPressed: () => widget.settingsController.toggleThemeMode(),
+                  onLongPress: () => _showThemePicker(context),
+                  icon: Icon(switch (widget.settingsController.themeMode) {
+                    ThemeMode.light => Icons.light_mode_outlined,
+                    ThemeMode.dark => Icons.dark_mode_outlined,
+                    ThemeMode.system => Icons.brightness_auto_outlined,
+                  }),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      showDragHandle: false,
+                      isScrollControlled: true,
+                      barrierColor: Colors.black38,
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * .6,
+                      ),
+                      builder: (context) {
+                        return SettingsSheet(
+                          fontController: _fontSizeController,
+                          settingsController: widget.settingsController,
+                        );
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
+
+      body: SafeArea(
+        top: _isLandscape,
+        child: GestureDetector(
+          onDoubleTap: _toggleHeader,
+          onScaleStart: (_) => _baseScale = _scaleFactor,
+          onScaleUpdate: (d) => setState(
+            () => _scaleFactor = (_baseScale * d.scale).clamp(0.8, 2.5),
+          ),
+          onScaleEnd: (_) {
+            final newSize = _fontSizeController.fontSize * _scaleFactor;
+            _fontSizeController.setFontSize(newSize);
+            setState(() => _scaleFactor = 1.0);
+          },
+          excludeFromSemantics: true,
+          child: Stack(
+            children: [
+              // --- The List (Bottom Layer) ---
+              if (widget.settingsController.isHorizontalScrolling)
+                Positioned.fill(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: Quran.totalPagesCount,
+                    onPageChanged: (page) => _updateReadingPosition(page + 1),
+                    itemBuilder: (context, index) {
+                      return SingleChildScrollView(
+                        padding: EdgeInsets.only(
+                          top: totalTopHeaderHeight + 10,
+                          bottom: 20,
+                        ),
+                        child: QuranPageWidget(
+                          fontSizeController: _fontSizeController,
+                          scaleFactor: _scaleFactor,
+                          pageNumber: index + 1,
+                          highlightedVerseListenable: _highlightedVerseNotifier,
+                          highlightedBlockKey: _highlightedBlockKey,
+                          settingsController: widget.settingsController,
+                          onVerseTap: _onVerseTapped,
+                          bookmarkRevision: bookmarkRevision,
+                          onBookmarkChanged: () => bookmarkRevision.value++,
+                        ),
+                      );
+                    },
+                  ),
+                )
+              else
+                Positioned.fill(
+                  child: ScrollablePositionedList.builder(
+                    itemCount: Quran.totalPagesCount,
+                    itemScrollController: _itemScrollController,
+                    itemPositionsListener: _itemPositionsListener,
+                    initialScrollIndex:
+                        (widget.initialPosition?.pageNumber ?? 1) - 1,
+                    padding: EdgeInsets.only(top: totalTopHeaderHeight + 10),
+                    itemBuilder: (context, index) => RepaintBoundary(
+                      child: QuranPageWidget(
+                        pageNumber: index + 1,
+                        fontSizeController: _fontSizeController,
+                        scaleFactor: _scaleFactor,
+                        highlightedVerseListenable: _highlightedVerseNotifier,
+                        highlightedBlockKey: _highlightedBlockKey,
+                        settingsController: widget.settingsController,
+                        onVerseTap: _onVerseTapped,
+                        bookmarkRevision: bookmarkRevision,
+                        onBookmarkChanged: () => bookmarkRevision.value++,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // --- Pinned Info Header (animates in/out in landscape) ---
+              if (_isLandscape)
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  top: _showHeader ? 0 : -infoHeaderHeight,
+                  left: 0,
+                  right: 0,
+                  height: infoHeaderHeight,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: _showHeader ? 1 : 0,
+                    child: PinnedHeader(
+                      settingsController: widget.settingsController,
+                      decoration: appBarDecoration,
+                      currentPositionNotifier: _currentPositionNotifier,
+                      goToPage: _jumpToPage,
+                    ),
+                  ),
+                )
+              else
+                Positioned(
+                  top: statusBarHeight + appBarHeight,
+                  left: 0,
+                  right: 0,
+                  height: infoHeaderHeight,
+                  child: PinnedHeader(
+                    decoration: appBarDecoration,
+                    settingsController: widget.settingsController,
+                    currentPositionNotifier: _currentPositionNotifier,
+                    goToPage: _jumpToPage,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _toggleHeader() {
+    setState(() => _showHeader = !_showHeader);
+  }
+}
+
+class QuranPageWidget extends StatefulWidget {
+  const QuranPageWidget({
+    required this.scaleFactor,
+    required this.fontSizeController,
+    required this.pageNumber,
+    required this.settingsController,
+    required this.highlightedVerseListenable,
+    required this.highlightedBlockKey,
+    required this.bookmarkRevision,
+    this.onVerseTap,
+    this.onBookmarkChanged,
+    super.key,
+  });
+
+  final int pageNumber;
+  final ValueListenable<({int surah, int verse})?> highlightedVerseListenable;
+  final GlobalKey highlightedBlockKey;
+  final ValueListenable<int> bookmarkRevision;
+  final void Function(int surah, int verse)? onVerseTap;
+  final VoidCallback? onBookmarkChanged;
+  final FontSizeController fontSizeController;
+  final SettingsController settingsController;
+  final double scaleFactor;
+
+  @override
+  State<QuranPageWidget> createState() => _QuranPageWidgetState();
+}
+
+class _QuranPageWidgetState extends State<QuranPageWidget> {
+  // Track to detect actual font changes
+  late FontFamily _lastFontFamily;
+  late FontWeight _lastFontWeight;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastFontFamily = widget.settingsController.fontFamily;
+    _lastFontWeight = widget.settingsController.fontWeight;
+    widget.settingsController.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant QuranPageWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.settingsController != widget.settingsController) {
+      oldWidget.settingsController.removeListener(_onSettingsChanged);
+      widget.settingsController.addListener(_onSettingsChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.settingsController.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    final newFamily = widget.settingsController.fontFamily;
+    final newWeight = widget.settingsController.fontWeight;
+
+    if (newFamily != _lastFontFamily || newWeight != _lastFontWeight) {
+      _lastFontFamily = newFamily;
+      _lastFontWeight = newWeight;
+      _rebuild();
+    }
+  }
+
+  void _rebuild() {
+    if (mounted) setState(() {});
+  }
+
+  void _onVerseInteraction(
+    int surah,
+    int verseNumber, {
+    required bool isLongPress,
+  }) {
+    widget.onVerseTap?.call(surah, verseNumber);
+
+    if (isLongPress && context.mounted) {
+      showDialog<void>(
+        context: context,
+        builder: (_) => Dialog(
+          child: VerseMenuDialog(
+            language: widget.settingsController.language,
+            surah: surah,
+            fontSize: widget.fontSizeController.fontSize,
+            fontFamily: widget.settingsController.fontFamily,
+            verse: (
+              number: verseNumber,
+              text: Quran.instance.getVerse(surah, verseNumber),
+            ),
+          ),
+        ),
+      ).then((_) {
+        widget.onBookmarkChanged?.call();
+      });
+    }
+  }
+
+  double _pageHorizontalPadding(double fontSize, double screenWidth) {
+    // Base padding from font size
+    double base;
+    if (fontSize >= 40) {
+      base = 10;
+    } else if (fontSize >= 34) {
+      base = 8;
+    } else if (fontSize >= 27) {
+      base = screenWidth > 600 ? 12 : 20;
+    } else {
+      base = 14;
+    }
+
+    // In landscape, add extra padding proportional to screen width
+    // to keep line length comfortable for reading
+    if (screenWidth > 600) {
+      // Landscape or tablet
+      final extra = (screenWidth - 600) * 0.1;
+      debugPrint((base + extra.clamp(26, 60)).toString());
+      return base + extra.clamp(26, 40);
+    }
+
+    return base;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pageModel = QuranPageTextCache.instance.get(widget.pageNumber);
+    final baseFontSize =
+        widget.fontSizeController.verseFontSize * widget.scaleFactor;
+    final symbolFontSize =
+        widget.fontSizeController.verseSymbolFontSize * widget.scaleFactor;
+    final headerFontSize =
+        widget.fontSizeController.surahHeaderFontSize * widget.scaleFactor;
+    final fontFamily = widget.settingsController.fontFamily;
+
+    return GestureDetector(
+      child: Container(
+        color: Colors.transparent,
+        padding: EdgeInsets.symmetric(
+          horizontal: _pageHorizontalPadding(
+            baseFontSize,
+            MediaQuery.of(context).size.width,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (int i = 0; i < pageModel.surahs.length; i++) ...[
+              if (pageModel.surahs[i].verses.any((v) => v.number == 1)) ...[
+                _SurahHeader(
+                  surah: pageModel.surahs[i],
+                  fontSize: headerFontSize,
+                  fontFamily: fontFamily,
+                  settingsController: widget.settingsController,
+                ),
+                if (pageModel.surahs[i].hasBasmala || fontFamily.isWarsh)
+                  _Basmala(
+                    fontSize: headerFontSize + 2,
+                    fontFamily: fontFamily,
+                  ),
+              ],
+              _SurahTextBlock(
+                surahNumber: pageModel.surahs[i].surahNumber,
+                block: pageModel.blocks[i],
+                fontSize: baseFontSize,
+                symbolFontSize: symbolFontSize,
+                highlightedVerseListenable: widget.highlightedVerseListenable,
+                highlightedBlockKey: widget.highlightedBlockKey,
+                bookmarkRevision: widget.bookmarkRevision,
+                onInteraction: _onVerseInteraction,
+                settingsController: widget.settingsController,
+                lineHeight: widget.fontSizeController.lineHeight,
+              ),
+            ],
+            if (!widget.settingsController.isHorizontalScrolling)
+              const Divider(height: 32, thickness: 2),
+          ],
+        ),
+      ),
+    );
+  }
+}
+// ─────────────────────────────────────────────────────────
+// Surah Header
+// ─────────────────────────────────────────────────────────
+
+class _SurahHeader extends StatelessWidget {
+  const _SurahHeader({
+    required this.surah,
+    required this.fontSize,
+    required this.fontFamily,
+    required this.settingsController,
+  });
+
+  final SurahInPage surah;
+  final double fontSize;
+  final FontFamily fontFamily;
+  final SettingsController settingsController;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S(settingsController.language);
+    final isAr = settingsController.language == 'ar';
+    final surahName = isAr
+        ? Quran.instance.getSurahNameArabic(surah.surahNumber)
+        : Quran.instance.getSurahName(surah.surahNumber);
+
+    String formatNum(int n) => isAr ? getArabicNumber(n) : n.toString();
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 24, top: 4),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.symmetric(
+          horizontal: BorderSide(color: context.colorScheme.primary),
+        ),
+      ),
+      child: DefaultTextStyle(
+        style: TextStyle(
+          color: context.colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
+          fontFamily: isAr ? FontFamily.arabicNumbersFontFamily.name : null,
+          letterSpacing: 0,
+          fontSize: fontSize - 6,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              child: Wrap(
+                spacing: 5,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(s.surahOrder),
+                  Text('(${formatNum(surah.surahNumber)})'),
+                ],
+              ),
+            ),
+            Text(
+              '${s.surahLabel} $surahName',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: fontSize,
+                height: 1.2,
+                fontFamily: isAr ? fontFamily.name : null,
+                color: context.colorScheme.primary,
+              ),
+            ),
+            Flexible(
+              child: Wrap(
+                spacing: 5,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(s.surahVerses),
+                  Text(
+                    '(${formatNum(Quran.instance.getVerseCount(surah.surahNumber))})',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// Extracted: Basmala
+// ─────────────────────────────────────────────────────────
+
+class _Basmala extends StatelessWidget {
+  const _Basmala({required this.fontSize, required this.fontFamily});
+
+  final double fontSize;
+  final FontFamily fontFamily;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = switch (fontFamily) {
+      FontFamily.hafs => Quran.uthmanicHafsBasmala,
+      FontFamily.rustam => Quran.madinaHafsBasmala,
+      FontFamily.warsh => Quran.warshBasmala,
+      FontFamily.scheherazade => Quran.madinaHafsBasmala,
+    };
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: context.colorScheme.onSurface,
+          fontSize: fontSize,
+          fontFamily: fontFamily.name,
+          letterSpacing: 0,
+          fontWeight: FontWeight.w300,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// Surah Text Block
+// ─────────────────────────────────────────────────────────
+
+class _SurahTextBlock extends StatefulWidget {
+  const _SurahTextBlock({
+    required this.lineHeight,
+    required this.surahNumber,
+    required this.block,
+    required this.fontSize,
+    required this.symbolFontSize,
+    required this.highlightedVerseListenable,
+    required this.highlightedBlockKey,
+    required this.bookmarkRevision,
+    required this.onInteraction,
+    required this.settingsController,
+  });
+
+  final int surahNumber;
+  final SurahBlockText block;
+  final double fontSize;
+  final double symbolFontSize;
+  final ValueListenable<({int surah, int verse})?> highlightedVerseListenable;
+  final GlobalKey highlightedBlockKey;
+  final ValueListenable<int> bookmarkRevision;
+  final void Function(int s, int v, {required bool isLongPress}) onInteraction;
+  final SettingsController settingsController;
+  final double? lineHeight;
+
+  @override
+  State<_SurahTextBlock> createState() => _SurahTextBlockState();
+}
+
+class _SurahTextBlockState extends State<_SurahTextBlock> {
+  final GlobalKey _textKey = GlobalKey();
+
+  ({int surah, int verse})? _highlight;
+  Map<int, _VerseIndicatorInfo> _verseIndicators = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _highlight = widget.highlightedVerseListenable.value;
+    widget.highlightedVerseListenable.addListener(_onHighlightChanged);
+    widget.bookmarkRevision.addListener(_onBookmarkRevisionChanged);
+    _refreshIndicators();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SurahTextBlock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.highlightedVerseListenable !=
+        widget.highlightedVerseListenable) {
+      oldWidget.highlightedVerseListenable.removeListener(_onHighlightChanged);
+      _highlight = widget.highlightedVerseListenable.value;
+      widget.highlightedVerseListenable.addListener(_onHighlightChanged);
+    }
+
+    if (oldWidget.bookmarkRevision != widget.bookmarkRevision) {
+      oldWidget.bookmarkRevision.removeListener(_onBookmarkRevisionChanged);
+      widget.bookmarkRevision.addListener(_onBookmarkRevisionChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.highlightedVerseListenable.removeListener(_onHighlightChanged);
+    widget.bookmarkRevision.removeListener(_onBookmarkRevisionChanged);
+    super.dispose();
+  }
+
+  void _onHighlightChanged() {
+    final newH = widget.highlightedVerseListenable.value;
+    final oldH = _highlight;
+    _highlight = newH;
+
+    final affected =
+        (oldH?.surah == widget.surahNumber) ||
+        (newH?.surah == widget.surahNumber);
+
+    if (affected && mounted) setState(() {});
+  }
+
+  void _onBookmarkRevisionChanged() {
+    _refreshIndicators();
+    if (mounted) setState(() {});
+  }
+
+  void _refreshIndicators() {
+    final bookmarkService = BookmarkService();
+    final bookmarks = bookmarkService.getBookmarksSync();
+
+    // Quick filter: any bookmarks for this surah?
+    final surahBookmarks = <int, VerseBookmark>{};
+    for (final bm in bookmarks) {
+      if (bm.surah == widget.surahNumber) {
+        surahBookmarks[bm.verse] = bm;
+      }
+    }
+
+    if (surahBookmarks.isEmpty) {
+      _verseIndicators = const {};
+      return;
+    }
+
+    final categories = bookmarkService.getCategoriesSync();
+    final categoryColors = <String, Color>{
+      for (final cat in categories) cat.id: cat.color,
+    };
+
+    final indicators = <int, _VerseIndicatorInfo>{};
+    for (final seg in widget.block.segments) {
+      final bm = surahBookmarks[seg.verse];
+      if (bm != null) {
+        indicators[seg.verse] = _VerseIndicatorInfo(
+          hasBookmark: true,
+          hasNote: bm.note?.isNotEmpty ?? false,
+          categoryColor: bm.categoryId != null
+              ? categoryColors[bm.categoryId!]
+              : null,
+        );
+      }
+    }
+
+    _verseIndicators = indicators;
+  }
+
+  void _handleTap(Offset localPos, bool isLongPress) {
+    final renderObj = _textKey.currentContext?.findRenderObject();
+    if (renderObj is! RenderParagraph) return;
+
+    final index = renderObj.getPositionForOffset(localPos).offset;
+    final verse = _findVerseAt(index);
+    if (verse != null) {
+      widget.onInteraction(widget.surahNumber, verse, isLongPress: isLongPress);
+    }
+  }
+
+  int? _findVerseAt(int index) {
+    final segs = widget.block.segments;
+    int lo = 0;
+    int hi = segs.length - 1;
+    while (lo <= hi) {
+      final mid = (lo + hi) >> 1;
+      final s = segs[mid];
+      if (index < s.start) {
+        hi = mid - 1;
+      } else if (index >= s.end) {
+        lo = mid + 1;
+      } else {
+        return s.verse;
+      }
+    }
+    return null;
+  }
+
+  TextAlign _calculateAlignment() {
+    final verseCount = Quran.instance.getVerseCount(widget.surahNumber);
+
+    // Short surahs: center
+    if (verseCount <= 20) return TextAlign.center;
+    if (MediaQuery.of(context).orientation == Orientation.landscape) {
+      return TextAlign.justify;
+    }
+
+    // Large font: center (few words per line)
+    if (widget.fontSize > 34) return TextAlign.center;
+
+    return switch (widget.settingsController.textAlign) {
+      TextAlignOption.center => TextAlign.center,
+      TextAlignOption.start => TextAlign.start,
+      TextAlignOption.justify => TextAlign.justify,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isWarsh = widget.settingsController.fontFamily == FontFamily.warsh;
+
+    final highlightBg = context.isDarkMode
+        ? colorScheme.surfaceContainerHigh
+        : colorScheme.surfaceContainerHighest;
+    final highlightStyle = TextStyle(
+      background: Paint()
+        ..style = PaintingStyle.fill
+        ..strokeJoin = StrokeJoin.round
+        ..strokeWidth = 24.0
+        ..color = highlightBg,
+    );
+
+    final symbolFontFamily = isWarsh
+        ? FontFamily.warsh.name
+        : FontFamily.arabicNumbersFontFamily.name;
+
+    final baseSymbolStyle = TextStyle(
+      fontFamily: symbolFontFamily,
+      fontSize: widget.symbolFontSize,
+      fontWeight: FontWeight.w500,
+      color: context.colorScheme.primary,
+    );
+
+    final selectedVerse = (_highlight?.surah == widget.surahNumber)
+        ? _highlight?.verse
+        : null;
+
+    final hasAnyIndicators = _verseIndicators.isNotEmpty;
+
+    final children = <InlineSpan>[];
+
+    for (final seg in widget.block.segments) {
+      final isSelected = selectedVerse == seg.verse;
+      final fullText = seg.text;
+
+      String displayText;
+      String displaySymbol;
+
+      if (isWarsh && fullText.isNotEmpty) {
+        displayText = fullText.substring(0, fullText.length - 1).trimRight();
+        displaySymbol = fullText.substring(fullText.length - 1);
+      } else {
+        displayText = fullText;
+        displaySymbol = seg.symbolText;
+      }
+
+      // Insert a zero-size keyed sentinel inline with the highlighted verse
+      // so Scrollable.ensureVisible targets this exact position.
+      if (isSelected) {
+        children.add(
+          WidgetSpan(
+            child: KeyedSubtree(
+              key: widget.highlightedBlockKey,
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        );
+      }
+
+      // 1. Verse text
+      children.add(
+        TextSpan(
+          text: displayText.trim(),
+          style: isSelected ? highlightStyle : null,
+        ),
+      );
+
+      // 2. Spacer
+      if (isWarsh) {
+        children.add(const TextSpan(text: ' '));
+      }
+
+      // 3. Symbol with indicator styling
+      TextStyle symbolStyle = baseSymbolStyle;
+
+      if (hasAnyIndicators) {
+        final indicator = _verseIndicators[seg.verse];
+        if (indicator != null) {
+          final catColor = indicator.categoryColor ?? colorScheme.primary;
+          symbolStyle = baseSymbolStyle.copyWith(
+            fontFamily: symbolFontFamily,
+            color: catColor,
+            decoration: indicator.hasNote ? TextDecoration.underline : null,
+          );
+        }
+      }
+
+      children.add(TextSpan(text: displaySymbol.trim(), style: symbolStyle));
+
+      // 4. Spacer
+      children.add(const TextSpan(text: ' '));
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTapUp: (d) => _handleTap(d.localPosition, false),
+      onLongPressStart: (d) => _handleTap(d.localPosition, true),
+      child: RichText(
+        key: _textKey,
+        textAlign: _calculateAlignment(),
+        textDirection: TextDirection.rtl,
+        text: TextSpan(
+          style: TextStyle(
+            fontSize: widget.fontSize,
+            height: widget.lineHeight,
+            color: context.colorScheme.onSurface,
+            fontFamily: widget.settingsController.fontFamily.name,
+            fontWeight: widget.settingsController.fontWeight,
+          ),
+          children: children,
+        ),
+      ),
+    );
+  }
+}
+
+class _VerseIndicatorInfo {
+  const _VerseIndicatorInfo({
+    required this.hasBookmark,
+    required this.hasNote,
+    this.categoryColor,
+  });
+
+  final bool hasBookmark;
+  final bool hasNote;
+  final Color? categoryColor;
+}
