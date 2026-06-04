@@ -58,8 +58,8 @@ flutter run
 
 <div align="center">
 
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/0-light-hafs.png" width="200" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2-dark.png" width="200" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4-quick-navigation.png" width="200" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/0-reading.png" width="200" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1-navigation.png" width="200" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2-appearance.png" width="200" />
 
 </div>
