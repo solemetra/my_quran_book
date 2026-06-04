@@ -5,6 +5,7 @@ import 'package:my_quran/app/services/notes_service.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/widgets/edit_note_dialog.dart';
 import 'package:my_quran/quran/quran.dart';
+import 'package:my_quran/app/l10n.dart';
 
 enum NotesSort { updatedDesc, updatedAsc, createdDesc, createdAsc }
 
@@ -107,12 +108,12 @@ class _NotesScreenState extends State<NotesScreen> {
     await _load();
   }
 
-  String _sortLabel(NotesSort s) {
+  String _sortLabel(NotesSort s, S strings) {
     return switch (s) {
-      NotesSort.updatedDesc => 'آخر تعديل (الأحدث)',
-      NotesSort.updatedAsc => 'آخر تعديل (الأقدم)',
-      NotesSort.createdDesc => 'تاريخ الإنشاء (الأحدث)',
-      NotesSort.createdAsc => 'تاريخ الإنشاء (الأقدم)',
+      NotesSort.updatedDesc => strings.lastModifiedNewest,
+      NotesSort.updatedAsc => strings.lastModifiedOldest,
+      NotesSort.createdDesc => strings.dateCreatedNewest,
+      NotesSort.createdAsc => strings.dateCreatedOldest,
     };
   }
 
@@ -135,21 +136,22 @@ class _NotesScreenState extends State<NotesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final items = _filtered;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('الملاحظات'),
+          title: Text(s.notes),
           actions: [
             PopupMenuButton<NotesSort>(
-              tooltip: 'الترتيب',
+              tooltip: s.sortBy,
               initialValue: _sort,
               onSelected: (v) => setState(() => _sort = v),
               itemBuilder: (_) => NotesSort.values
                   .map(
-                    (s) => PopupMenuItem(value: s, child: Text(_sortLabel(s))),
+                    (v) => PopupMenuItem(value: v, child: Text(_sortLabel(v, s))),
                   )
                   .toList(),
               icon: const Icon(Icons.sort),
@@ -167,7 +169,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       controller: _searchController,
                       decoration: _inputDecoration(
                         prefixIconData: Icons.search,
-                        hintText: 'ابحث داخل الملاحظات...',
+                        hintText: s.searchInNotesHint,
                       ),
                     ),
                   ),
@@ -175,14 +177,14 @@ class _NotesScreenState extends State<NotesScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                     child: DropdownButtonFormField<int?>(
                       initialValue: _surahFilter,
-                      decoration: _inputDecoration(labelText: 'تصفية بالسورة'),
+                      decoration: _inputDecoration(labelText: s.filterBySurah),
                       items: [
-                        const DropdownMenuItem<int?>(child: Text('كل السور')),
-                        for (int s = 1; s <= 114; s++)
+                        DropdownMenuItem<int?>(child: Text(s.allSurahs)),
+                        for (int i = 1; i <= 114; i++)
                           DropdownMenuItem<int?>(
-                            value: s,
+                            value: i,
                             child: Text(
-                              'سورة ${Quran.instance.getSurahNameArabic(s)}',
+                              '${s.surahLabel} ${Quran.instance.getSurahNameArabic(i)}',
                             ),
                           ),
                       ],
@@ -195,11 +197,11 @@ class _NotesScreenState extends State<NotesScreen> {
                         _surahFilter = null;
                       }),
                       icon: const Icon(Icons.filter_list_off_outlined),
-                      label: const Text('إلغاء التصفية'),
+                      label: Text(s.clearFilter),
                     ),
                   Expanded(
                     child: items.isEmpty
-                        ? const Center(child: Text('لا توجد ملاحظات'))
+                        ? Center(child: Text(s.noNotes))
                         : ListView.separated(
                             padding: const EdgeInsets.all(12),
                             itemCount: items.length,
@@ -210,6 +212,7 @@ class _NotesScreenState extends State<NotesScreen> {
                               final surahName = Quran.instance
                                   .getSurahNameArabic(n.surah);
 
+                              final verseNum = s.isAr ? getArabicNumber(n.verse) : n.verse.toString();
                               return Card(
                                 elevation: 0,
                                 child: ListTile(
@@ -219,8 +222,8 @@ class _NotesScreenState extends State<NotesScreen> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   subtitle: Text(
-                                    'سورة $surahName •'
-                                    ' الآية ${getArabicNumber(n.verse)}',
+                                    '${s.surahLabel} $surahName • '
+                                    '${s.verse} $verseNum',
                                   ),
                                   trailing: const Icon(Icons.chevron_right),
                                   onTap: () => _edit(n),

@@ -240,8 +240,8 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
       if (total == 0) return const SizedBox.shrink();
       final isAr = widget.language == 'ar';
       final countText = _response.isTruncated 
-          ? (isAr ? 'عرض $shown من $total' : 'Showing $shown of $total')
-          : (isAr ? 'عدد النتائج: $total' : 'Total results: $total');
+          ? s.showingNofM(shown, total)
+          : s.resultsCountN(total);
           
       return Text(
         countText,
@@ -274,7 +274,8 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
     }
 
     Widget operatorControl() {
-      final labelPrefix = isAr ? 'مطابقة' : 'Match';
+      final s = S(widget.language);
+      final labelPrefix = s.matchLabel;
       return PopupMenuButton<SearchOperator>(
         initialValue: _operator,
         onSelected: (op) {

@@ -270,10 +270,11 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void _showThemePicker(BuildContext context) {
+    final s = S(widget.settingsController.language);
     showDialog(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
         child: Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -284,7 +285,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'المظهر',
+                  s.appearance,
                   style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -779,7 +780,9 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
                   fontFamily: fontFamily,
                   settingsController: widget.settingsController,
                 ),
-                if (pageModel.surahs[i].hasBasmala || fontFamily.isWarsh)
+                if (pageModel.surahs[i].hasBasmala ||
+                    pageModel.surahs[i].isAlfatihah ||
+                    fontFamily.isWarsh)
                   _Basmala(
                     fontSize: headerFontSize + 2,
                     fontFamily: fontFamily,
@@ -915,6 +918,8 @@ class _Basmala extends StatelessWidget {
       child: Text(
         text,
         textAlign: TextAlign.center,
+        textDirection: TextDirection.rtl,
+        locale: const Locale('ar'),
         style: TextStyle(
           color: context.colorScheme.onSurface,
           fontSize: fontSize,
@@ -1209,6 +1214,7 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
         key: _textKey,
         textAlign: _calculateAlignment(),
         textDirection: TextDirection.rtl,
+        locale: const Locale('ar'),
         text: TextSpan(
           style: TextStyle(
             fontSize: widget.fontSize,

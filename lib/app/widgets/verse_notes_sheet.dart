@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_quran/app/l10n.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/notes_service.dart';
 import 'package:my_quran/app/utils.dart';
@@ -79,7 +80,11 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final surahName = Quran.instance.getSurahNameArabic(widget.surah);
+    final verseNum = s.isAr
+        ? getArabicNumber(widget.verse)
+        : widget.verse.toString();
 
     return SafeArea(
       child: Padding(
@@ -96,8 +101,7 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    'ملاحظات • سورة $surahName •'
-                    ' الآية ${getArabicNumber(widget.verse)}',
+                    s.notesVerseHeader(surahName, verseNum),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -120,7 +124,7 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Text(
-                    'لا توجد ملاحظات بعد',
+                    s.noNotesYet,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 )
@@ -136,7 +140,9 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
                         contentPadding: EdgeInsets.zero,
                         title: Text(n.text),
                         subtitle: Text(
-                          'آخر تعديل: ${n.updatedAt.year}/${n.updatedAt.month}/${n.updatedAt.day}',
+                          s.lastModifiedLabel(
+                            '${n.updatedAt.year}/${n.updatedAt.month}/${n.updatedAt.day}',
+                          ),
                           style: Theme.of(context).textTheme.labelSmall,
                         ),
                         trailing: IconButton(
@@ -154,7 +160,7 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
                 child: FilledButton.icon(
                   onPressed: _addNote,
                   icon: const Icon(Icons.add),
-                  label: const Text('إضافة ملاحظة'),
+                  label: Text(s.addNote),
                 ),
               ),
             ],

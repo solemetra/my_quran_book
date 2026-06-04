@@ -198,7 +198,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
           return FilterChip(
             selected: isSelected,
-            label: Text('${cat.title} $countText'),
+            label: Text('${s.bookmarkCategoryTitle(cat.id, cat.title)} $countText'),
             avatar: isSelected
                 ? null
                 : CircleAvatar(backgroundColor: cat.color, radius: 7),
@@ -237,7 +237,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 const SizedBox(height: 16),
                 Text(
                   isFiltered
-                      ? (isAr ? 'لا توجد علامات في هذا التصنيف' : 'No bookmarks in this category')
+                      ? s.noBookmarksInCategory
                       : s.noBookmarksYet,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -247,7 +247,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 const SizedBox(height: 8),
                 Text(
                   isFiltered
-                      ? (isAr ? 'جرّب اختيار تصنيف آخر أو عرض الكل' : 'Try another category or show all')
+                      ? s.tryAnotherCategory
                       : s.addBookmarkHint,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(
@@ -369,7 +369,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          category.title,
+                          s.bookmarkCategoryTitle(category.id, category.title),
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: category.color,
@@ -392,7 +392,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                             children: [
                               const Icon(Icons.category_outlined, size: 20),
                               const SizedBox(width: 8),
-                              Text(isAr ? 'تغيير التصنيف' : 'Change category'),
+                              Text(s.changeCategory),
                             ],
                           ),
                         ),
@@ -472,7 +472,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                       Expanded(
                         child: Text(
                           notesCount == 0
-                              ? (isAr ? 'لا توجد ملاحظات' : 'No notes')
+                              ? s.noNotes
                               : '${s.notes}: ${isAr ? getArabicNumber(notesCount) : notesCount}'
                                     '${latestPreview != null ? ' • ${latestPreview.replaceAll('\n', ' ')}' : ''}',
                           maxLines: 2,
@@ -583,7 +583,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         return Directionality(
           textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
           child: AlertDialog(
-            title: Text(isAr ? 'تغيير التصنيف' : 'Change category'),
+            title: Text(s.changeCategory),
             content: SizedBox(
               width: double.maxFinite,
               child: ListView.builder(
@@ -604,7 +604,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                             )
                           : null,
                     ),
-                    title: Text(cat.title),
+                    title: Text(s.bookmarkCategoryTitle(cat.id, cat.title)),
                     selected: isSelected,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -632,7 +632,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     await _reloadAndNotify();
 
     if (mounted) {
-      final msg = isAr ? 'تم تغيير التصنيف ✓' : 'Category changed ✓';
+      final msg = s.categoryChanged;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(msg)));
@@ -645,7 +645,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       await _bookmarkService.removeBookmarkById(bookmark.id);
       await _reloadAndNotify();
       if (mounted) {
-        final msg = isAr ? 'تمت إزالة العلامة' : 'Bookmark removed';
+        final msg = s.bookmarkRemoved;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(msg)));
@@ -668,11 +668,9 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       builder: (ctx) => Directionality(
         textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
         child: AlertDialog(
-          title: Text(isAr ? 'حذف العلامة' : 'Delete bookmark'),
+          title: Text(s.deleteBookmark),
           content: Text(
-            isAr 
-              ? 'هل تريد حذف العلامة من سورة $surahName، الآية $verseNum؟'
-              : 'Do you want to delete the bookmark from Surah $surahName, Verse $verseNum?',
+            s.deleteBookmarkConfirm(surahName, verseNum),
             style: TextStyle(
               fontSize: 16,
               fontFamily: isAr ? FontFamily.arabicNumbersFontFamily.name : null,

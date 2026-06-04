@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
+
 enum NoteDialogAction { save, delete }
 
 class NoteDialogResult {
@@ -21,15 +23,16 @@ Future<NoteDialogResult?> showEditNoteDialog(
   return showDialog<NoteDialogResult>(
     context: context,
     builder: (ctx) {
+      final s = S.of(ctx);
       final colorScheme = Theme.of(ctx).colorScheme;
 
       return Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
         child: AlertDialog(
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('ملاحظة'),
+              Text(s.note),
               if (canDelete)
                 TextButton(
                   onPressed: () => Navigator.pop(
@@ -37,7 +40,7 @@ Future<NoteDialogResult?> showEditNoteDialog(
                     const NoteDialogResult(NoteDialogAction.delete),
                   ),
                   child: Text(
-                    'حذف',
+                    s.delete,
                     style: TextStyle(color: colorScheme.error),
                   ),
                 ),
@@ -47,15 +50,15 @@ Future<NoteDialogResult?> showEditNoteDialog(
             controller: controller,
             maxLines: 4,
             autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'اكتب ملاحظتك هنا...',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: s.writeNoteHint,
+              border: const OutlineInputBorder(),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('إلغاء'),
+              child: Text(s.cancel),
             ),
             FilledButton(
               onPressed: () {
@@ -77,7 +80,7 @@ Future<NoteDialogResult?> showEditNoteDialog(
                   NoteDialogResult(NoteDialogAction.save, text: text),
                 );
               },
-              child: const Text('حفظ'),
+              child: Text(s.save),
             ),
           ],
         ),

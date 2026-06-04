@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_quran/app/l10n.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/utils.dart';
 
@@ -30,9 +31,10 @@ class BookmarkCategoryPickerSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -53,7 +55,7 @@ class BookmarkCategoryPickerSheet extends StatelessWidget {
                   const Icon(Icons.bookmark, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    isBookmarked ? 'تعديل العلامة' : 'إضافة علامة',
+                    isBookmarked ? s.editBookmark : s.addBookmark,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -79,7 +81,7 @@ class BookmarkCategoryPickerSheet extends StatelessWidget {
                           color: colorScheme.error,
                         ),
                         title: Text(
-                          'إزالة العلامة',
+                          s.removeBookmark,
                           style: TextStyle(color: colorScheme.error),
                         ),
                         onTap: () => Navigator.pop(
@@ -106,7 +108,7 @@ class BookmarkCategoryPickerSheet extends StatelessWidget {
                             : null,
                       ),
                       title: Text(
-                        cat.title,
+                        s.bookmarkCategoryTitle(cat.id, cat.title),
                         style: TextStyle(
                           fontWeight: isSelected
                               ? FontWeight.bold

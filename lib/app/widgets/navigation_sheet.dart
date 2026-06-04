@@ -32,7 +32,6 @@ class QuranNavigationBottomSheet extends StatefulWidget {
 
 class _QuranNavigationBottomSheetState
     extends State<QuranNavigationBottomSheet> {
-  late FixedExtentScrollController _pageController;
   late FixedExtentScrollController _surahController;
   late FixedExtentScrollController _juzController;
   late FixedExtentScrollController _verseController;
@@ -53,9 +52,6 @@ class _QuranNavigationBottomSheetState
     _currentPage = widget.initialPage;
     _initDataFromPage(_currentPage);
 
-    _pageController = FixedExtentScrollController(
-      initialItem: _currentPage - 1,
-    );
     _surahController = FixedExtentScrollController(
       initialItem: _currentSurah - 1,
     );
@@ -78,20 +74,17 @@ class _QuranNavigationBottomSheetState
   @override
   void dispose() {
     _debounce?.cancel();
-    _pageController.dispose();
     _surahController.dispose();
     _juzController.dispose();
     _verseController.dispose();
     super.dispose();
   }
 
-  // --- LOGIC (Same as before, just keeping it sync) ---
-
   void _triggerUpdate(VoidCallback updateFn) {
     if (_isUpdating) return;
 
-    HapticFeedback.selectionClick(); // Subtle click
-    setState(() {}); // Rebuild to update highlight text color immediately
+    HapticFeedback.selectionClick();
+    setState(() {});
 
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
@@ -100,19 +93,9 @@ class _QuranNavigationBottomSheetState
 
       updateFn();
 
-      // Unlock after animations roughly finish
       Future.delayed(const Duration(milliseconds: 350), () {
         if (mounted) setState(() => _isUpdating = false);
       });
-    });
-  }
-
-  void _onPageChanged(int index) {
-    final page = index + 1;
-    _currentPage = page;
-    _triggerUpdate(() {
-      _initDataFromPage(page);
-      _animateAll();
     });
   }
 
@@ -150,7 +133,6 @@ class _QuranNavigationBottomSheetState
   }
 
   void _animateAll({bool skipVerse = false}) {
-    _pageController.jumpToItem(_currentPage - 1);
     _surahController.jumpToItem(_currentSurah - 1);
     _juzController.jumpToItem(_currentJuz - 1);
     if (!skipVerse) {
@@ -159,143 +141,128 @@ class _QuranNavigationBottomSheetState
     }
   }
 
-  // --- UI BUILD ---
+  String _surahName(int surah) => s.isAr
+      ? Quran.instance.getSurahNameArabic(surah)
+      : Quran.instance.getSurahName(surah);
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isAr = widget.settingsController.language == 'ar';
 
-    return DefaultTextStyle(
-      style: TextStyle(
-        fontFamily: isAr ? FontFamily.hafs.name : null,
-      ),
-      child: SafeArea(
-        child: Container(
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              // Minimal Drag Handle
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
+    return SafeArea(
+      child: Container(
+        decoration: const BoxDecoration(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                _surahName(_currentSurah),
+                textAlign: TextAlign.center,
+                textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: s.isAr ? 22 : 18,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary,
+                  fontFamily: s.isAr ? FontFamily.hafs.name : null,
                 ),
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 12),
 
-              // --- PICKERS AREA ---
-              Expanded(
-                child: Stack(
-                  children: [
-                    // 1. The Highlight Bar (Behind the selected item)
-                    Center(
-                      child: Container(
-                        height: 44,
-                        margin: const EdgeInsets.only(top: 26),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHigh,
-                        ),
+            Expanded(
+              child: Stack(
+                children: [
+                  Center(
+                    child: Container(
+                      height: 44,
+                      margin: const EdgeInsets.only(top: 26),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHigh,
                       ),
                     ),
-
-                    // 2. The Flat Pickers
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildFlatWheel(
-                            controller: _pageController,
-                            count: Quran.totalPagesCount,
-                            label: s.page,
-                            onChanged: _onPageChanged,
-                            itemBuilder: (i) => _buildItem(i + 1),
-                          ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildFlatWheel(
+                          controller: _surahController,
+                          count: Quran.totalSurahCount,
+                          label: s.surah,
+                          onChanged: _onSurahChanged,
+                          itemBuilder: (i) =>
+                              _buildNumberItem(i + 1, _currentSurah),
                         ),
-                        Expanded(
-                          flex: 2, // Surah gets more space
-                          child: _buildFlatWheel(
-                            controller: _surahController,
-                            count: Quran.totalSurahCount,
-                            label: s.surah,
-                            onChanged: _onSurahChanged,
-                            itemBuilder: (i) => Center(
-                              child: Text(
-                                isAr
-                                    ? Quran.instance.getSurahNameArabic(i + 1)
-                                    : Quran.instance.getSurahName(i + 1),
-                                style: TextStyle(
-                                  fontSize: isAr ? 20 : 16,
-                                  color: (i + 1) == _currentSurah
-                                      ? colorScheme.primary
-                                      : colorScheme.onSurface,
-                                  fontWeight: (i + 1) == _currentSurah
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            ),
-                          ),
+                      ),
+                      Expanded(
+                        child: _buildFlatWheel(
+                          controller: _juzController,
+                          count: Quran.totalJuzCount,
+                          label: s.juz,
+                          onChanged: _onJuzChanged,
+                          itemBuilder: (i) =>
+                              _buildNumberItem(i + 1, _currentJuz),
                         ),
-                        Expanded(
-                          child: _buildFlatWheel(
-                            controller: _juzController,
-                            count: Quran.totalJuzCount,
-                            label: s.juz,
-                            onChanged: _onJuzChanged,
-                            itemBuilder: (i) => _buildItem(i + 1),
-                          ),
+                      ),
+                      Expanded(
+                        child: _buildFlatWheel(
+                          controller: _verseController,
+                          count: Quran.instance.getVerseCount(_currentSurah),
+                          label: s.verse,
+                          onChanged: _onVerseChanged,
+                          itemBuilder: (i) =>
+                              _buildNumberItem(i + 1, _currentVerse),
                         ),
-                        Expanded(
-                          child: _buildFlatWheel(
-                            controller: _verseController,
-                            count: Quran.instance.getVerseCount(_currentSurah),
-                            label: s.verse,
-                            onChanged: _onVerseChanged,
-                            itemBuilder: (i) => _buildItem(i + 1),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
+            ),
 
-              // --- BOTTOM ACTIONS ---
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(s.cancel),
-                      ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(s.cancel),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: FilledButton(
-                        onPressed: () {
-                          widget.onNavigate(
-                            page: _currentPage,
-                            surah: _currentSurah,
-                            verse: _currentVerse,
-                          );
-                          Navigator.pop(context);
-                        },
-                        child: Text(s.navigate),
-                      ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: () {
+                        widget.onNavigate(
+                          page: _currentPage,
+                          surah: _currentSurah,
+                          verse: _currentVerse,
+                        );
+                        Navigator.pop(context);
+                      },
+                      child: Text(s.navigate),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -324,12 +291,11 @@ class _QuranNavigationBottomSheetState
         Expanded(
           child: ListWheelScrollView.useDelegate(
             controller: controller,
-            itemExtent: 44, // Matches highlight bar height
+            itemExtent: 44,
             physics: const FixedExtentScrollPhysics(),
             changeReportingBehavior: ChangeReportingBehavior.onScrollEnd,
-            diameterRatio: 100, // Huge diameter = appears straight
-            perspective: 0.0001, // Near zero perspective = no 3D tilt
-            // -----------------------
+            diameterRatio: 100,
+            perspective: 0.0001,
             onSelectedItemChanged: onChanged,
             childDelegate: ListWheelChildBuilderDelegate(
               builder: (context, index) {
@@ -353,16 +319,17 @@ class _QuranNavigationBottomSheetState
     );
   }
 
-  Widget _buildItem(int number) {
+  Widget _buildNumberItem(int number, int selected) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isAr = widget.settingsController.language == 'ar';
+    final isSelected = number == selected;
     return Text(
-      isAr ? _toArabicNumber(number) : number.toString(),
+      s.isAr ? _toArabicNumber(number) : number.toString(),
       style: TextStyle(
         fontSize: 21,
-        color: colorScheme.onSurface,
+        color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         fontFamily:
-            isAr ? FontFamily.arabicNumbersFontFamily.name : null,
+            s.isAr ? FontFamily.arabicNumbersFontFamily.name : null,
       ),
     );
   }

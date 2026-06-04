@@ -4,6 +4,7 @@ import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/quran/quran.dart';
+import 'package:my_quran/app/l10n.dart';
 
 class PinnedHeader extends StatelessWidget {
   const PinnedHeader({
@@ -22,6 +23,7 @@ class PinnedHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return DefaultTextStyle(
       style: TextStyle(
         fontFamily: FontFamily.arabicNumbersFontFamily.name,
@@ -38,6 +40,9 @@ class PinnedHeader extends StatelessWidget {
             final surahName = Quran.instance.getSurahNameArabic(
               position.surahNumber,
             );
+            final surahNum = s.isAr ? getArabicNumber(position.surahNumber) : position.surahNumber.toString();
+            final pageNum = s.isAr ? getArabicNumber(position.pageNumber) : position.pageNumber.toString();
+
             return Stack(
               alignment: Alignment.center,
               children: [
@@ -47,7 +52,7 @@ class PinnedHeader extends StatelessWidget {
                     GestureDetector(
                       onTap: () => onSurahTapped(context),
                       child: Text(
-                        '${getArabicNumber(position.surahNumber)} - '
+                        '$surahNum - '
                         '$surahName',
                       ),
                     ),
@@ -58,19 +63,23 @@ class PinnedHeader extends StatelessWidget {
                         final hizbDisplay = settingsController.hizbDisplay;
                         final parts = <String>[];
 
+                        final juzNum = s.isAr ? getArabicNumber(position.juzNumber) : position.juzNumber.toString();
+                        final hizbNum = s.isAr ? getArabicNumber(position.hizbNumber) : position.hizbNumber.toString();
+                        final quarterNum = s.isAr ? getArabicNumber(position.hizbQuarter) : position.hizbQuarter.toString();
+
                         if (!hizbDisplay.isReplaceJuz) {
                           parts.add(
-                            'جزء ${getArabicNumber(position.juzNumber)}',
+                            '${s.juz} $juzNum',
                           );
                         }
 
                         if (!hizbDisplay.isHidden) {
                           parts.add(
-                            'حزب ${getArabicNumber(position.hizbNumber)}',
+                            '${s.hizbLabel} $hizbNum',
                           );
                           if (hizbDisplay.withQuarter) {
                             parts.add(
-                              ' (${getArabicNumber(position.hizbQuarter)}/٤)',
+                              ' ($quarterNum/${s.isAr ? '٤' : '4'})',
                             );
                           }
                         }
@@ -93,7 +102,7 @@ class PinnedHeader extends StatelessWidget {
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 200),
                       child: Text(
-                        getArabicNumber(position.pageNumber),
+                        pageNum,
                         key: ValueKey(position.pageNumber),
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -113,6 +122,7 @@ class PinnedHeader extends StatelessWidget {
   }
 
   void onHizbTapped(BuildContext context) {
+    final s = S.of(context);
     int? hizb;
     int selectedQuarter = 1;
 
@@ -138,7 +148,7 @@ class PinnedHeader extends StatelessWidget {
           final colorScheme = Theme.of(context).colorScheme;
 
           return SimpleDialog(
-            title: const Text('أدخل رقم الحزب'),
+            title: Text(s.enterHizbNumber),
             contentPadding: const EdgeInsets.all(24),
             children: [
               TextField(
@@ -161,7 +171,7 @@ class PinnedHeader extends StatelessWidget {
 
               // Quarter selector
               Text(
-                'الربع',
+                s.quarterLabel,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -171,10 +181,10 @@ class PinnedHeader extends StatelessWidget {
               const SizedBox(height: 8),
               SegmentedButton<int>(
                 showSelectedIcon: false,
-                segments: const [
-                  ButtonSegment(value: 1, label: Text('الأول')),
-                  ButtonSegment(value: 2, label: Text('الثاني')),
-                  ButtonSegment(value: 3, label: Text('الثالث')),
+                segments: [
+                  ButtonSegment(value: 1, label: Text(s.quarter1)),
+                  ButtonSegment(value: 2, label: Text(s.quarter2)),
+                  ButtonSegment(value: 3, label: Text(s.quarter3)),
                 ],
                 style: ButtonStyle(
                   textStyle: const WidgetStatePropertyAll(
@@ -205,7 +215,7 @@ class PinnedHeader extends StatelessWidget {
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: () => validateAndGo(hizb, selectedQuarter),
-                child: const Text('انتقال'),
+                child: Text(s.navigate),
               ),
             ],
           );
@@ -215,6 +225,7 @@ class PinnedHeader extends StatelessWidget {
   }
 
   void onJuzTapped(BuildContext context) {
+    final s = S.of(context);
     int? juz;
     void validateAndGo(int? juz) {
       if (juz is! int || juz < 1 || juz > 30) {
@@ -237,7 +248,7 @@ class PinnedHeader extends StatelessWidget {
     showAdaptiveDialog(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('أدخل رقم الجزء'),
+        title: Text(s.enterJuzNumber),
         contentPadding: const EdgeInsets.all(24),
         children: [
           TextField(
@@ -261,7 +272,7 @@ class PinnedHeader extends StatelessWidget {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: () => validateAndGo(juz),
-            child: const Text('انتقال'),
+            child: Text(s.navigate),
           ),
         ],
       ),
@@ -269,6 +280,7 @@ class PinnedHeader extends StatelessWidget {
   }
 
   void onPageNumberTapped(BuildContext context) {
+    final s = S.of(context);
     int? page;
     void validateAndGo() {
       if (page == null) return;
@@ -283,7 +295,7 @@ class PinnedHeader extends StatelessWidget {
     showAdaptiveDialog(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('أدخل رقم الصفحة'),
+        title: Text(s.enterPageNumber),
         contentPadding: const EdgeInsets.all(24),
         children: [
           TextFormField(
@@ -294,12 +306,12 @@ class PinnedHeader extends StatelessWidget {
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (value) {
               if (value?.isEmpty ?? true) {
-                return 'الرجاء إدخال رقم صفحة';
+                return s.enterPageNumberPrompt;
               }
 
               final page = int.tryParse(value!);
               if (page is! int || page < 1 || page > Quran.totalPagesCount) {
-                return 'الرجاء إدخال رقم صفحة صحيح';
+                return s.invalidPageNumber;
               }
               return null;
             },
@@ -307,7 +319,7 @@ class PinnedHeader extends StatelessWidget {
             onFieldSubmitted: (value) => validateAndGo(),
           ),
           const SizedBox(height: 16),
-          FilledButton(onPressed: validateAndGo, child: const Text('انتقال')),
+          FilledButton(onPressed: validateAndGo, child: Text(s.navigate)),
         ],
       ),
     );
@@ -346,6 +358,7 @@ class _SearchSurahDialogState extends State<_SearchSurahDialog> {
   @override
   Widget build(BuildContext context) {
     final screen = MediaQuery.of(context).size;
+    final s = S.of(context);
     return SimpleDialog(
       contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       children: [
@@ -368,7 +381,7 @@ class _SearchSurahDialogState extends State<_SearchSurahDialog> {
                         )
                         .toList();
               if (items.isEmpty) {
-                return const Center(child: Text('لا توجد نتائج...'));
+                return Center(child: Text(s.noResults));
               }
               return ListView.builder(
                 itemCount: items.length,

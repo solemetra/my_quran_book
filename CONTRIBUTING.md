@@ -18,8 +18,11 @@ First off, thank you for considering contributing to **(قرآني)**!
 
 ### 2. Setup
 ```bash
-# Clone the repo
-git clone https://github.com/dmouayad/my_quran.git
+# Clone this fork
+git clone https://github.com/solemetra/my_quran_book.git
+
+# Upstream (original project)
+# git clone https://github.com/dmouayad/my_quran.git
 
 # Install dependencies
 flutter pub get

@@ -188,6 +188,8 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         child: Text(
           widget.verse.text,
           textAlign: TextAlign.center,
+          textDirection: TextDirection.rtl,
+          locale: const Locale('ar'),
           style: TextStyle(
             fontSize: widget.fontSize.clamp(16, maxFont),
             height: height,
@@ -259,12 +261,12 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
       children: [
         action(
           icon: Icons.copy,
-          label: isAr ? 'نسخ الآية' : 'Copy verse',
+          label: s.copyVerse,
           onTap: () => _copyVerse(context),
         ),
         action(
           icon: isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-          label: isBookmarked ? (isAr ? 'تعديل العلامة' : 'Edit bookmark') : (isAr ? 'إضافة علامة' : 'Add bookmark'),
+          label: isBookmarked ? s.editBookmark : s.addBookmark,
           onTap: () => _openBookmarkPicker(context),
         ),
         action(
@@ -427,7 +429,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         _syncCategory();
       });
       if (context.mounted) {
-        final msg = isAr ? 'تم النقل إلى "${cat.title}" ✓' : 'Moved to "${cat.title}" ✓';
+        final msg = s.movedTo(s.bookmarkCategoryTitle(cat.id, cat.title));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg)),
         );
@@ -455,7 +457,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
       });
 
       if (context.mounted) {
-        final msg = isAr ? 'تمت إضافة العلامة ✓' : 'Bookmark added ✓';
+        final msg = s.bookmarkAdded;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(msg)));
@@ -474,7 +476,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
       currentCategory = null;
     });
     if (context.mounted) {
-      final msg = isAr ? 'تمت إزالة العلامة' : 'Bookmark removed';
+      final msg = s.bookmarkRemoved;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(msg)));
@@ -525,8 +527,8 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     final verseNum = isAr ? getArabicNumber(widget.verse.number) : widget.verse.number.toString();
     
     final textToCopy = isAr 
-        ? 'سورة $surahName - الآية {$verseNum}\n"$verseInPlainText"\n'
-        : 'Surah $surahName - Verse $verseNum\n"$verseInPlainText"\n';
+        ? '${s.surahLabel} $surahName - ${s.verse} {$verseNum}\n"$verseInPlainText"\n'
+        : '${s.surahLabel} $surahName - ${s.verse} $verseNum\n"$verseInPlainText"\n';
         
     Clipboard.setData(ClipboardData(text: textToCopy));
 

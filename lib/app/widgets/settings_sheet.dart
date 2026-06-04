@@ -268,14 +268,14 @@ class SettingsSheet extends StatelessWidget {
                     _SegmentedRow(
                       label: s.language,
                       child: SegmentedButton<String>(
-                        segments: const [
+                        segments: [
                           ButtonSegment(
                             value: 'ar',
-                            label: Text('العربية'),
+                            label: Text(s.langAr),
                           ),
                           ButtonSegment(
                             value: 'en',
-                            label: Text('English'),
+                            label: Text(s.langEn),
                           ),
                         ],
                         style: _segmentStyle(colorScheme),
@@ -364,13 +364,13 @@ class SettingsSheet extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Date: ${preview.createdAt}'),
+                                    Text('${s.backupDate}: ${preview.createdAt}'),
                                     const SizedBox(height: 8),
-                                    Text('Categories: ${preview.categoryCount}'),
-                                    Text('Bookmarks: ${preview.bookmarkCount}'),
-                                    Text('Notes: ${preview.noteCount}'),
+                                    Text('${s.backupCategories}: ${preview.categoryCount}'),
+                                    Text('${s.backupBookmarks}: ${preview.bookmarkCount}'),
+                                    Text('${s.backupNotes}: ${preview.noteCount}'),
                                     const SizedBox(height: 12),
-                                    const Text('Choose import mode:'),
+                                    Text(s.chooseImportMode),
                                   ],
                                 ),
                                 actions: [
@@ -381,12 +381,12 @@ class SettingsSheet extends StatelessWidget {
                                   TextButton(
                                     onPressed: () =>
                                         Navigator.pop(ctx, ImportMode.merge),
-                                    child: const Text('Merge'),
+                                    child: Text(s.merge),
                                   ),
                                   FilledButton(
                                     onPressed: () =>
                                         Navigator.pop(ctx, ImportMode.replace),
-                                    child: const Text('Replace'),
+                                    child: Text(s.replace),
                                   ),
                                 ],
                               ),
@@ -413,7 +413,7 @@ class SettingsSheet extends StatelessWidget {
                             Navigator.pop(context); // close progress
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('✅ ${s.success}'),
+                                content: Text('✅ ${s.importSuccess}'),
                               ),
                             );
                           }
@@ -421,7 +421,7 @@ class SettingsSheet extends StatelessWidget {
                           if (context.mounted) {
                             Navigator.pop(context); // close progress
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('❌ ${s.error}: $e')),
+                              SnackBar(content: Text('❌ ${s.importError}: $e')),
                             );
                           }
                         }
@@ -564,7 +564,7 @@ class _StepperRow extends StatelessWidget {
     this.isDefault = false,
     this.onReset,
     this.isAr = true,
-    this.resetLabel = 'الافتراضي',
+    this.resetLabel = 'Default',
   });
 
   final String label;

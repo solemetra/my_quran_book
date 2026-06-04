@@ -1,12 +1,13 @@
 name: my_quran
 description: A minimal app to read the Quran.
+license: GPL-3.0-or-later
 
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 version: 1.7.6+23
 
 environment:
     sdk: ">=3.10.0 <4.0.0"
-    flutter: 3.41.4
+    flutter: ">=3.38.5"
 
 dependencies:
     collection: ^1.19.1

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_quran/app/l10n.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/utils.dart';
 
@@ -18,11 +19,12 @@ class ThemeTilesPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Column(
       children: [
         _ThemeTile(
-          title: 'قرآني',
-          description: 'المظهر الافتراضي الخاص بتطبيق "قرآني"',
+          title: s.themeMyQuran,
+          description: s.themeMyQuranDesc,
           icon: Icons.auto_awesome_outlined,
           previewColors: (
             bg: const Color(0xFFFAFDFC),
@@ -32,8 +34,8 @@ class ThemeTilesPicker extends StatelessWidget {
           onTap: () => onChanged(AppTheme.myQuran),
         ),
         _ThemeTile(
-          title: 'سيبيا',
-          description: 'ألوان مشابهة للورق، مريحة للعين',
+          title: s.themeSepia,
+          description: s.themeSepiaDesc,
           icon: Icons.menu_book_sharp,
           previewColors: (
             bg: const Color(0xFFF2E7DA),
@@ -45,8 +47,8 @@ class ThemeTilesPicker extends StatelessWidget {
 
         if (supportsDynamic)
           _ThemeTile(
-            title: 'ألوان جهازك',
-            description: 'يستخدم ألوان جهازك الشخصية مع التبديل التلقائي',
+            title: s.themeDynamic,
+            description: s.themeDynamicDesc,
             icon: Icons.palette_outlined,
             previewColors: (
               bg:

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
+import 'package:my_quran/app/l10n.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({super.key});
@@ -31,18 +32,19 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
-        appBar: AppBar(title: const Text('إدارة التصنيفات')),
+        appBar: AppBar(title: Text(s.manageCategories)),
         floatingActionButton: FloatingActionButton(
-          onPressed: _addCategory,
+          onPressed: () => _addCategory(s),
           child: const Icon(Icons.add),
         ),
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _categories.isEmpty
-            ? const Center(child: Text('لا توجد تصنيفات'))
+            ? Center(child: Text(s.noCategories))
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: _categories.length,
@@ -54,9 +56,9 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                       backgroundColor: cat.color,
                       radius: 16,
                     ),
-                    title: Text(cat.title),
+                    title: Text(s.bookmarkCategoryTitle(cat.id, cat.title)),
                     subtitle: isDefault
-                        ? const Text('التصنيف الافتراضي')
+                        ? Text(s.defaultCategory)
                         : null,
                     trailing: isDefault
                         ? null
@@ -65,14 +67,14 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.edit_outlined),
-                                onPressed: () => _editCategory(cat),
+                                onPressed: () => _editCategory(cat, s),
                               ),
                               IconButton(
                                 icon: Icon(
                                   Icons.delete_outline,
                                   color: Theme.of(context).colorScheme.error,
                                 ),
-                                onPressed: () => _deleteCategory(cat),
+                                onPressed: () => _deleteCategory(cat, s),
                               ),
                             ],
                           ),
@@ -83,17 +85,17 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     );
   }
 
-  Future<void> _addCategory() async {
+  Future<void> _addCategory(S s) async {
     final titleController = TextEditingController();
     const Color selectedColor = Colors.blue;
 
     final result = await showDialog<BookmarkCategory>(
       context: context,
       builder: (ctx) => _CategoryFormDialog(
-        title: 'تصنيف جديد',
+        title: s.newCategory,
         titleController: titleController,
         initialColor: selectedColor,
-        actionLabel: 'إنشاء',
+        actionLabel: s.create,
       ),
     );
 
@@ -103,17 +105,17 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     }
   }
 
-  Future<void> _editCategory(BookmarkCategory cat) async {
+  Future<void> _editCategory(BookmarkCategory cat, S s) async {
     final titleController = TextEditingController(text: cat.title);
 
     final result = await showDialog<BookmarkCategory>(
       context: context,
       builder: (ctx) => _CategoryFormDialog(
-        title: 'تعديل التصنيف',
+        title: s.editCategory,
         titleController: titleController,
         initialColor: cat.color,
         existingId: cat.id,
-        actionLabel: 'حفظ',
+        actionLabel: s.save,
       ),
     );
 
@@ -123,28 +125,29 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     }
   }
 
-  Future<void> _deleteCategory(BookmarkCategory cat) async {
+  Future<void> _deleteCategory(BookmarkCategory cat, S s) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
         child: AlertDialog(
-          title: const Text('حذف التصنيف'),
+          title: Text(s.deleteCategory),
           content: Text(
-            'هل تريد حذف تصنيف "${cat.title}"؟\n'
-            'سيتم نقل العلامات المرتبطة به إلى التصنيف الافتراضي.',
+            s.deleteCategoryConfirm(
+              s.bookmarkCategoryTitle(cat.id, cat.title),
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('إلغاء'),
+              child: Text(s.cancel),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(ctx).colorScheme.error,
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('حذف'),
+              child: Text(s.delete),
             ),
           ],
         ),
@@ -207,8 +210,9 @@ class _CategoryFormDialogState extends State<_CategoryFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
       child: AlertDialog(
         title: Text(widget.title),
         content: SingleChildScrollView(
@@ -219,14 +223,14 @@ class _CategoryFormDialogState extends State<_CategoryFormDialog> {
               TextField(
                 controller: widget.titleController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'اسم التصنيف',
+                decoration: InputDecoration(
+                  labelText: s.categoryName,
                   isDense: true,
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 8),
-              const Text('اللون'),
+              Text(s.color),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -266,7 +270,7 @@ class _CategoryFormDialogState extends State<_CategoryFormDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+            child: Text(s.cancel),
           ),
           FilledButton(
             onPressed: () {

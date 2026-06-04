@@ -108,6 +108,9 @@ class QuranPageTextCache {
     var charCount = 0;
 
     for (final verse in surah.verses) {
+      // Al-Fatiha verse 1 is the Basmala, rendered separately in the UI.
+      if (surah.surahNumber == 1 && verse.number == 1) continue;
+
       final start = charCount;
 
       final text = verse.text;

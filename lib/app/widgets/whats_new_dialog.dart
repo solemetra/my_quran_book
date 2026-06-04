@@ -5,6 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n.dart';
+
 // ignore_for_file: lines_longer_than_80_chars ()
 
 class WhatsNewDialog extends StatelessWidget {
@@ -30,12 +32,11 @@ class WhatsNewDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-
     return Directionality(
-      textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+      textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: ConstrainedBox(
@@ -65,7 +66,7 @@ class WhatsNewDialog extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'ما الجديد؟',
+                      s.whatsNew,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
@@ -73,9 +74,9 @@ class WhatsNewDialog extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              const Flexible(
+              Flexible(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
                       _VersionSection(
@@ -83,7 +84,7 @@ class WhatsNewDialog extends StatelessWidget {
                         isCurrent: true,
                         categories: [
                           _CategorySection(
-                            title: 'الإصلاحات',
+                            title: s.fixes,
                             icon: Icons.bug_report,
                             color: Colors.red,
                             items: [
@@ -91,7 +92,7 @@ class WhatsNewDialog extends StatelessWidget {
                             ],
                           ),
                           _CategorySection(
-                            title: 'التحسينات',
+                            title: s.improvements,
                             icon: Icons.trending_up,
                             color: Colors.blue,
                             items: [
@@ -99,7 +100,7 @@ class WhatsNewDialog extends StatelessWidget {
                             ],
                           ),
                           _CategorySection(
-                            title: 'أخرى',
+                            title: s.other,
                             icon: Icons.auto_awesome,
                             color: Colors.blueGrey,
                             items: ['تظليل الآية عند استعادة آخر موضع قراءة.'],
@@ -111,7 +112,7 @@ class WhatsNewDialog extends StatelessWidget {
                         isCurrent: false,
                         categories: [
                           _CategorySection(
-                            title: 'الإصلاحات',
+                            title: s.fixes,
                             icon: Icons.bug_report,
                             color: Colors.red,
                             items: [
@@ -122,7 +123,7 @@ class WhatsNewDialog extends StatelessWidget {
                             ],
                           ),
                           _CategorySection(
-                            title: 'ميزات جديدة',
+                            title: s.newFeatures,
                             icon: Icons.new_releases,
                             color: Colors.green,
                             items: [
@@ -132,13 +133,13 @@ class WhatsNewDialog extends StatelessWidget {
                             ],
                           ),
                           _CategorySection(
-                            title: 'الأداء',
+                            title: s.performance,
                             icon: Icons.speed,
                             color: Colors.indigo,
                             items: ['تحسينات طفيفة في الأداء والاستقرار.'],
                           ),
                           _CategorySection(
-                            title: 'التحسينات',
+                            title: s.improvements,
                             icon: Icons.trending_up,
                             color: Colors.blue,
                             items: [
@@ -147,7 +148,7 @@ class WhatsNewDialog extends StatelessWidget {
                             ],
                           ),
                           _CategorySection(
-                            title: 'العلامات',
+                            title: s.bookmarksLabel,
                             icon: Icons.bookmarks,
                             color: Colors.orange,
                             items: [
@@ -161,7 +162,7 @@ class WhatsNewDialog extends StatelessWidget {
                         isCurrent: false,
                         categories: [
                           _CategorySection(
-                            title: 'الإصلاحات',
+                            title: s.fixes,
                             icon: Icons.bug_report,
                             color: Colors.red,
                             items: [
@@ -169,7 +170,7 @@ class WhatsNewDialog extends StatelessWidget {
                             ],
                           ),
                           _CategorySection(
-                            title: 'ميزات جديدة',
+                            title: s.newFeatures,
                             icon: Icons.new_releases,
                             color: Colors.green,
                             items: [
@@ -180,7 +181,7 @@ class WhatsNewDialog extends StatelessWidget {
                             ],
                           ),
                           _CategorySection(
-                            title: 'التحسينات',
+                            title: s.improvements,
                             icon: Icons.trending_up,
                             color: Colors.blue,
                             items: [
@@ -195,7 +196,7 @@ class WhatsNewDialog extends StatelessWidget {
                         isCurrent: false,
                         categories: [
                           _CategorySection(
-                            title: 'ميزات جديدة',
+                            title: s.newFeatures,
                             icon: Icons.new_releases,
                             color: Colors.green,
                             items: [
@@ -203,7 +204,7 @@ class WhatsNewDialog extends StatelessWidget {
                             ],
                           ),
                           _CategorySection(
-                            title: 'واجهة المستخدم',
+                            title: s.ui,
                             icon: Icons.palette,
                             color: Colors.purple,
                             items: [
@@ -211,7 +212,7 @@ class WhatsNewDialog extends StatelessWidget {
                             ],
                           ),
                           _CategorySection(
-                            title: 'الملاحظات',
+                            title: s.notes,
                             icon: Icons.edit_note,
                             color: Colors.teal,
                             items: [
@@ -219,7 +220,7 @@ class WhatsNewDialog extends StatelessWidget {
                             ],
                           ),
                           _CategorySection(
-                            title: 'أخرى',
+                            title: s.other,
                             icon: Icons.auto_awesome,
                             color: Colors.blueGrey,
                             items: [
@@ -515,7 +516,7 @@ class WhatsNewDialog extends StatelessWidget {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text(isAr ? 'فهمت، شكراً' : 'Got it, thanks'),
+                    child: Text(s.gotIt),
                   ),
                 ),
               ),
@@ -540,6 +541,7 @@ class _VersionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
@@ -570,7 +572,7 @@ class _VersionSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  'الحالي',
+                  s.current,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: colorScheme.onPrimary,
                     fontWeight: FontWeight.bold,
@@ -644,6 +646,4 @@ class _CategorySection extends StatelessWidget {
       ),
     );
   }
-}
-
 }
