@@ -206,8 +206,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                         ? bookmarkColor.withOpacity(0.16)
                         : null,
                     foregroundColor: isBookmarked ? bookmarkColor : null,
-                    onTap: () => _toggleBookmark(context),
-                    onLongPress: () => _openBookmarkPicker(context),
+                    onTap: () => _openBookmarkPicker(context),
                   ),
                   const SizedBox(width: 6),
 
@@ -282,70 +281,6 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     );
   }
 
-  Future<void> _toggleBookmark(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    if (!isBookmarked) {
-      BookmarkCategory cat;
-      try {
-        cat = categories.firstWhere((c) => c.id == 'cat-reading');
-      } catch (_) {
-        cat = categories.isNotEmpty
-            ? categories.first
-            : const BookmarkCategory(
-                id: 'cat-reading',
-                title: 'Чтение',
-                color: Color(0xFF2E7D32),
-              );
-      }
-
-      final newBookmark = VerseBookmark(
-        id: '${widget.surah}_${widget.verse.number}_${DateTime.now().millisecondsSinceEpoch}',
-        surah: widget.surah,
-        verse: widget.verse.number,
-        pageNumber: Quran.instance.getPageNumber(
-          widget.surah,
-          widget.verse.number,
-        ),
-        createdAt: DateTime.now(),
-        categoryId: cat.id,
-      );
-
-      await bookmarkService.addBookmark(newBookmark);
-      if (!mounted) return;
-      setState(() {
-        isBookmarked = true;
-        bookmark = newBookmark;
-        _syncCategory();
-      });
-
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(s.bookmarkAdded),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } else {
-      await bookmarkService.removeBookmarkByVerse(
-        widget.surah,
-        widget.verse.number,
-      );
-      if (!mounted) return;
-      setState(() {
-        isBookmarked = false;
-        bookmark = null;
-        currentCategory = null;
-      });
-
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(s.bookmarkRemoved),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
 
   Future<void> _openBookmarkPicker(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -483,7 +418,6 @@ class _SpringPillButton extends StatefulWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.onLongPress,
     this.backgroundColor,
     this.foregroundColor,
     this.badgeCount,
@@ -492,7 +426,6 @@ class _SpringPillButton extends StatefulWidget {
   final Widget icon;
   final String label;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
   final Color? backgroundColor;
   final Color? foregroundColor;
   final int? badgeCount;
@@ -547,7 +480,6 @@ class _SpringPillButtonState extends State<_SpringPillButton>
           onTapUp: _onTapUp,
           onTapCancel: _onTapCancel,
           onTap: widget.onTap,
-          onLongPress: widget.onLongPress,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
