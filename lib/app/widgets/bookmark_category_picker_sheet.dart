@@ -68,7 +68,7 @@ class BookmarkCategoryPickerSheet extends StatelessWidget {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: categories.length + (isBookmarked ? 1 : 0),
-                  separatorBuilder: (_, _) => Divider(
+                  separatorBuilder: (_, __) => Divider(
                     height: 1,
                     color: colorScheme.outlineVariant.applyOpacity(0.4),
                   ),

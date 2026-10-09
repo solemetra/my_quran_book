@@ -1,6 +1,6 @@
-# Contributing to MyQuran
+# Contributing to My Quran Book
 
-First off, thank you for considering contributing to **(قرآني)**! 
+First off, thank you for considering contributing to **My Quran Book**! 
 
 ## 🎯 Core Philosophy
 1.  **Performance First:** We use `ScrollablePositionedList` and Hit-Testing because standard rendering is too slow for 600+ pages. Any PR that causes scroll jank will be rejected.
@@ -18,11 +18,8 @@ First off, thank you for considering contributing to **(قرآني)**!
 
 ### 2. Setup
 ```bash
-# Clone this fork
+# Clone the repository
 git clone https://github.com/solemetra/my_quran_book.git
-
-# Upstream (original project)
-# git clone https://github.com/dmouayad/my_quran.git
 
 # Install dependencies
 flutter pub get

@@ -1,4 +1,4 @@
-package com.dmouayad.my_quran
+package com.solemetra.quran
 
 import io.flutter.embedding.android.FlutterActivity
 

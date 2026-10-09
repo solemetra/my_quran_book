@@ -26,7 +26,7 @@ class PinnedHeader extends StatelessWidget {
     final s = S.of(context);
     return DefaultTextStyle(
       style: TextStyle(
-        fontFamily: FontFamily.arabicNumbersFontFamily.name,
+        fontFamily: s.isAr ? FontFamily.arabicNumbersFontFamily.name : null,
         color: Theme.of(context).colorScheme.onSurface,
         fontWeight: FontWeight.w700,
         fontSize: 16,
@@ -37,9 +37,9 @@ class PinnedHeader extends StatelessWidget {
         child: ValueListenableBuilder<ReadingPosition>(
           valueListenable: currentPositionNotifier,
           builder: (context, position, _) {
-            final surahName = Quran.instance.getSurahNameArabic(
-              position.surahNumber,
-            );
+            final surahName = s.isAr
+                ? Quran.instance.getSurahNameArabic(position.surahNumber)
+                : Quran.instance.getSurahName(position.surahNumber);
             final surahNum = s.isAr ? getArabicNumber(position.surahNumber) : position.surahNumber.toString();
             final pageNum = s.isAr ? getArabicNumber(position.pageNumber) : position.pageNumber.toString();
 

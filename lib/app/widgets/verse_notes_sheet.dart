@@ -81,7 +81,9 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final surahName = Quran.instance.getSurahNameArabic(widget.surah);
+    final surahName = s.isAr
+        ? Quran.instance.getSurahNameArabic(widget.surah)
+        : Quran.instance.getSurahName(widget.surah);
     final verseNum = s.isAr
         ? getArabicNumber(widget.verse)
         : widget.verse.toString();
@@ -133,7 +135,7 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
                   child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: _notes.length,
-                    separatorBuilder: (_, _) => const Divider(height: 16),
+                    separatorBuilder: (_, __) => const Divider(height: 16),
                     itemBuilder: (context, i) {
                       final n = _notes[i];
                       return ListTile(

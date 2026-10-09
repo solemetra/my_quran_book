@@ -6,11 +6,9 @@ import 'package:my_quran/app/font_size_controller.dart';
 import 'package:my_quran/app/l10n.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/backup_service.dart';
-import 'package:my_quran/app/services/search_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
-import 'package:my_quran/quran/quran.dart';
 
 class SettingsSheet extends StatelessWidget {
   const SettingsSheet({
@@ -38,15 +36,14 @@ class SettingsSheet extends StatelessWidget {
           listenable: Listenable.merge([fontController, settingsController]),
           builder: (context, _) {
             final colorScheme = context.colorScheme;
-            final isWarsh = settingsController.fontFamily == FontFamily.warsh;
-
             return ListView(
               children: [
                 _groupTile(
-                  key: const PageStorageKey('settings_group_font'),
-                  icon: Icons.text_fields,
-                  title: s.font,
-                  subtitle: _fontSubtitle(context, isWarsh, s),
+                  context: context,
+                  key: const PageStorageKey('settings_group_text_reading'),
+                  icon: Icons.menu_book_outlined,
+                  title: s.textAndReading,
+                  subtitle: _textAndReadingSubtitle(context, s),
                   initiallyExpanded: true,
                   children: [
                     _StepperRow(
@@ -62,82 +59,6 @@ class SettingsSheet extends StatelessWidget {
                           : fontController.increaseFontSize,
                     ),
                     const _ThinDivider(),
-
-                    // Font weight (you wanted it with font controls)
-                    if (settingsController.fontFamily != FontFamily.rustam) ...[
-                      _SegmentedRow(
-                        label: s.fontWeight,
-                        child: SegmentedButton<FontWeight>(
-                          segments: [
-                            ButtonSegment(
-                              value: FontWeight.w500,
-                              label: Text(s.fontWeightNormal),
-                            ),
-                            ButtonSegment(
-                              value: FontWeight.w600,
-                              label: Text(s.fontWeightBold),
-                            ),
-                          ],
-                          style: _segmentStyle(colorScheme),
-                          selected: {settingsController.fontWeight},
-                          onSelectionChanged: (newSet) {
-                            settingsController.fontWeight = newSet.first;
-                          },
-                        ),
-                      ),
-                      const _ThinDivider(),
-                    ],
-
-                    // Font type (Uthmani vs Madina) - hide completely in Warsh
-                    if (!isWarsh) ...[
-                      _SegmentedRow(
-                        label: s.fontType,
-                        child: SegmentedButton<FontFamily>(
-                          segments: [
-                            ButtonSegment(
-                              value: FontFamily.hafs,
-                              label: Text(
-                                s.fontTypeUthmani,
-                                style: TextStyle(
-                                  fontFamily: isAr ? FontFamily.hafs.name : null,
-                                ),
-                              ),
-                            ),
-                            ButtonSegment(
-                              value: FontFamily.rustam,
-                              label: Text(
-                                s.fontTypeMadina,
-                                style: TextStyle(
-                                  fontFamily: isAr ? FontFamily.rustam.name : null,
-                                ),
-                              ),
-                            ),
-                          ],
-                          style: _segmentStyle(colorScheme),
-                          selected: {settingsController.fontFamily},
-                          onSelectionChanged: (newSet) async {
-                            settingsController.fontFamily = newSet.first;
-                            await Future<void>.delayed(
-                              const Duration(milliseconds: 300),
-                            );
-                            await Quran.instance.useDatasourceForFont(
-                              newSet.first,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                _groupTile(
-                  key: const PageStorageKey('settings_group_reading'),
-                  icon: Icons.chrome_reader_mode_outlined,
-                  title: s.reading,
-                  subtitle: _readingSubtitle(context, s),
-                  children: [
                     _StepperRow(
                       isAr: isAr,
                       resetLabel: s.themeDefault,
@@ -178,60 +99,23 @@ class SettingsSheet extends StatelessWidget {
                             settingsController.textAlign = v.first,
                       ),
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                _groupTile(
-                  key: const PageStorageKey('settings_group_narration'),
-                  icon: Icons.record_voice_over_outlined,
-                  title: s.narration,
-                  subtitle: isWarsh ? s.narrationWarsh : s.narrationHafs,
-                  children: [
-                    _SegmentedRow(
-                      label: s.narration,
-                      child: SegmentedButton<bool>(
-                        segments: [
-                          ButtonSegment(
-                            value: false,
-                            label: Text(s.narrationHafs),
-                          ),
-                          ButtonSegment(
-                            value: true,
-                            label: Text(
-                              s.narrationWarsh,
-                              style: TextStyle(
-                                fontFamily: isAr ? FontFamily.warsh.name : null,
-                              ),
-                            ),
-                          ),
-                        ],
-                        style: _segmentStyle(colorScheme),
-                        selected: {isWarsh},
-                        onSelectionChanged: (newSet) async {
-                          settingsController.fontFamily = newSet.first
-                              ? FontFamily.warsh
-                              : FontFamily.hafs;
-
-                          await Future<void>.delayed(
-                            const Duration(milliseconds: 300),
-                          );
-                          final newFont = settingsController.fontFamily;
-                          await Quran.instance.useDatasourceForFont(newFont);
-                          unawaited(SearchService.init(newFont.name));
-                        },
-                      ),
+                    const _ThinDivider(),
+                    _ToggleRow(
+                      icon: Icons.swipe,
+                      title: s.bookMode,
+                      subtitle: s.bookModeDesc,
+                      value: settingsController.isHorizontalScrolling,
+                      onChanged: (v) =>
+                          settingsController.isHorizontalScrolling = v,
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 10),
-
                 _groupTile(
-                  key: const PageStorageKey('settings_group_appearance'),
+                  context: context,
+                  key: const PageStorageKey('settings_group_appearance_screen'),
                   icon: Icons.palette_outlined,
-                  title: s.appearance,
+                  title: s.appearanceAndScreen,
                   subtitle: _appearanceSubtitle(context, s),
                   children: [
                     Padding(
@@ -254,45 +138,6 @@ class SettingsSheet extends StatelessWidget {
                       onChanged: (v) =>
                           settingsController.useTrueBlackBgColor = v,
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                _groupTile(
-                  key: const PageStorageKey('settings_group_general'),
-                  icon: Icons.tune,
-                  title: s.general,
-                  subtitle: _generalSubtitle(context, s),
-                  children: [
-                    _SegmentedRow(
-                      label: s.language,
-                      child: SegmentedButton<String>(
-                        segments: [
-                          ButtonSegment(
-                            value: 'ar',
-                            label: Text(s.langAr),
-                          ),
-                          ButtonSegment(
-                            value: 'en',
-                            label: Text(s.langEn),
-                          ),
-                        ],
-                        style: _segmentStyle(colorScheme),
-                        selected: {settingsController.language},
-                        onSelectionChanged: (v) =>
-                            settingsController.language = v.first,
-                      ),
-                    ),
-                    const _ThinDivider(),
-                    _ToggleRow(
-                      icon: Icons.swipe,
-                      title: s.bookMode,
-                      subtitle: s.bookModeDesc,
-                      value: settingsController.isHorizontalScrolling,
-                      onChanged: (v) =>
-                          settingsController.isHorizontalScrolling = v,
-                    ),
                     const _ThinDivider(),
                     _ToggleRow(
                       icon: Icons.lightbulb_outline,
@@ -301,7 +146,16 @@ class SettingsSheet extends StatelessWidget {
                       value: settingsController.keepScreenOn,
                       onChanged: (_) => settingsController.toggleKeepScreenOn(),
                     ),
-                    const _ThinDivider(),
+                  ],
+                ),
+
+                _groupTile(
+                  context: context,
+                  key: const PageStorageKey('settings_group_extra_data'),
+                  icon: Icons.tune,
+                  title: s.extraAndData,
+                  subtitle: _extraDataSubtitle(context, s),
+                  children: [
                     _ToggleRow(
                       icon: Icons.numbers_outlined,
                       title: s.showHizbNumber,
@@ -323,20 +177,11 @@ class SettingsSheet extends StatelessWidget {
                           ? HizbDisplay.replaceJuz
                           : HizbDisplay.replaceJuzWithQuarter,
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                _groupTile(
-                  key: const PageStorageKey('settings_group_backup'),
-                  icon: Icons.backup_outlined,
-                  title: s.backup,
-                  subtitle: s.backupDesc,
-                  children: [
+                    const _ThinDivider(),
                     _ActionRow(
                       icon: Icons.upload_file,
                       title: s.exportBackup,
+                      subtitle: s.exportBackupDesc,
                       onTap: () async {
                         await BackupService().exportAndShare();
                       },
@@ -345,6 +190,7 @@ class SettingsSheet extends StatelessWidget {
                     _ActionRow(
                       icon: Icons.download,
                       title: s.importBackup,
+                      subtitle: s.importBackupDesc,
                       onTap: () async {
                         final backup = BackupService();
                         final file = await backup.pickBackupFile();
@@ -440,50 +286,50 @@ class SettingsSheet extends StatelessWidget {
   // ───────────────────────── helpers ─────────────────────────
 
   Widget _groupTile({
+    required BuildContext context,
     required Key key,
     required IconData icon,
     required String title,
     required List<Widget> children,
     String? subtitle,
-    Color? backgroundColor,
     bool initiallyExpanded = false,
   }) {
-    return ExpansionTile(
-      key: key,
-      initiallyExpanded: initiallyExpanded,
-      leading: Icon(icon),
-      backgroundColor: backgroundColor,
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: subtitle == null ? null : Text(subtitle),
-      children: children,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: key,
+          initiallyExpanded: initiallyExpanded,
+          shape: const Border(),
+          collapsedShape: const Border(),
+          leading: Icon(icon),
+          backgroundColor: Colors.transparent,
+          collapsedBackgroundColor: Colors.transparent,
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: subtitle == null ? null : Text(subtitle),
+          children: children,
+        ),
+      ),
     );
   }
 
-  String _fontSubtitle(BuildContext context, bool isWarsh, S s) {
+  String _textAndReadingSubtitle(BuildContext context, S s) {
     final size = fontController.fontSize.round();
-    final weight = settingsController.fontWeight == FontWeight.w600
-        ? s.fontWeightBold
-        : s.fontWeightNormal;
-    final family = isWarsh
-        ? s.narrationWarsh
-        : (settingsController.fontFamily == FontFamily.rustam
-              ? s.fontTypeMadina
-              : s.fontTypeUthmani);
-    return '${s.fontSize}: $size • ${s.fontWeight}: $weight • $family';
-  }
-
-  String _readingSubtitle(BuildContext context, S s) {
-    final lh = fontController.isDefaultLineHeight
-        ? s.lineHeightAuto
-        : fontController.lineHeight!.toStringAsFixed(1);
-
     final align = switch (settingsController.textAlign) {
       TextAlignOption.justify => s.textAlignJustify,
       TextAlignOption.center => s.textAlignCenter,
       TextAlignOption.start => s.textAlignStart,
     };
-
-    return '${s.lineHeight}: $lh • ${s.textAlign}: $align';
+    final book = settingsController.isHorizontalScrolling
+        ? s.bookMode
+        : s.verticalScroll;
+    return '${s.fontSize}: $size • $align • $book';
   }
 
   String _appearanceSubtitle(BuildContext context, S s) {
@@ -496,18 +342,21 @@ class SettingsSheet extends StatelessWidget {
     final amoledLabel = settingsController.useTrueBlackBgColor
         ? 'AMOLED'
         : null;
+    final screenLabel = settingsController.keepScreenOn
+        ? s.keepScreenOn
+        : null;
 
-    final parts = <String>[themeLabel, ?amoledLabel];
+    final parts = <String>[
+      themeLabel,
+      if (amoledLabel != null) amoledLabel,
+      if (screenLabel != null) screenLabel,
+    ];
 
     return parts.join(' • ');
   }
 
-  String _generalSubtitle(BuildContext context, S s) {
-    final book = settingsController.isHorizontalScrolling
-        ? s.bookMode
-        : s.verticalScroll;
-    final screen = settingsController.keepScreenOn ? s.keepScreenOn : null;
-    return [book, ?screen].join(' • ');
+  String _extraDataSubtitle(BuildContext context, S s) {
+    return s.backup;
   }
 
   ButtonStyle _segmentStyle(ColorScheme colorScheme) {
@@ -542,11 +391,11 @@ class _ThinDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Divider(
-      height: 1,
+      height: 8,
       thickness: 0.5,
       indent: 16,
       endIndent: 16,
-      color: Theme.of(context).colorScheme.outlineVariant.applyOpacity(0.3),
+      color: Theme.of(context).colorScheme.outlineVariant.applyOpacity(0.2),
     );
   }
 }

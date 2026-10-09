@@ -31,7 +31,7 @@ extension HexColor on Color {
   /// Converts this [Color] to a hexadecimal string in format #RRGGBB.
   /// Set `withAlpha` to `true` to include the alpha channel.
   String toHex({bool withAlpha = false, bool leadingHashSign = true}) {
-    final int argb32 = toARGB32();
+    final int argb32 = value;
     final String hex =
         (withAlpha
             ? (argb32 >> 24 & 0xFF).toRadixString(16).padLeft(2, '0')

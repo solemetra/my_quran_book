@@ -229,12 +229,12 @@ class Quran {
     });
   }
 
-  ///Takes [surahNumber] and returns the Surah name
+  ///Takes [surahNumber] and returns the Surah name in Russian
   String getSurahName(int surahNumber) {
     if (surahNumber < 1 || surahNumber > totalSurahCount) {
       throw RangeError.range(surahNumber, 1, totalSurahCount, 'surahNumber');
     }
-    return surah[surahNumber - 1]['name']! as String;
+    return surahNamesRussian[surahNumber - 1];
   }
 
   ///Takes [surahNumber] returns the Surah name in Arabic
@@ -248,6 +248,14 @@ class Quran {
       );
     }
     return surah[surahNumber - 1]['arabic']! as String;
+  }
+
+  ///Takes [surahNumber] and returns the Surah meaning/translation in Russian
+  String getSurahMeaningRussian(int surahNumber) {
+    if (surahNumber < 1 || surahNumber > totalSurahCount) {
+      throw RangeError.range(surahNumber, 1, totalSurahCount, 'surahNumber');
+    }
+    return surahMeaningsRussian[surahNumber - 1];
   }
 
   ///Takes [surahNumber], [verseNumber] and returns the page number of the Quran

@@ -16,7 +16,6 @@ import 'package:my_quran/app/pages/bookmarks_screen.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/widgets/settings_sheet.dart';
 import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
-import 'package:my_quran/app/widgets/whats_new_dialog.dart';
 import 'package:my_quran/app/quran_page_text_cache.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/font_size_controller.dart';
@@ -98,9 +97,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _itemPositionsListener.itemPositions.addListener(_onScrollUpdate);
     widget.settingsController.addListener(_onScrollingModeChanged);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      WhatsNewDialog.showIfNeeded(context);
-    });
     _fontSizeController.addListener(() => setState(() {}));
   }
 
@@ -187,6 +183,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void _updateReadingPosition(int pageNumber) {
+    QuranPageTextCache.instance.prewarmAround(pageNumber);
     final pageData = Quran.instance.getPageData(pageNumber);
     if (pageData.isNotEmpty) {
       final firstSurah = pageData.first;
@@ -479,14 +476,16 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
               elevation: 0,
               flexibleSpace: Container(decoration: appBarDecoration),
               actions: [
-                IconButton(
-                  onPressed: () => widget.settingsController.toggleThemeMode(),
+                GestureDetector(
                   onLongPress: () => _showThemePicker(context),
-                  icon: Icon(switch (widget.settingsController.themeMode) {
-                    ThemeMode.light => Icons.light_mode_outlined,
-                    ThemeMode.dark => Icons.dark_mode_outlined,
-                    ThemeMode.system => Icons.brightness_auto_outlined,
-                  }),
+                  child: IconButton(
+                    onPressed: () => widget.settingsController.toggleThemeMode(),
+                    icon: Icon(switch (widget.settingsController.themeMode) {
+                      ThemeMode.light => Icons.light_mode_outlined,
+                      ThemeMode.dark => Icons.dark_mode_outlined,
+                      ThemeMode.system => Icons.brightness_auto_outlined,
+                    }),
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.settings_outlined),
@@ -532,24 +531,29 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 Positioned.fill(
                   child: PageView.builder(
                     controller: _pageController,
+                    physics: const ClampingScrollPhysics(),
                     itemCount: Quran.totalPagesCount,
                     onPageChanged: (page) => _updateReadingPosition(page + 1),
                     itemBuilder: (context, index) {
-                      return SingleChildScrollView(
-                        padding: EdgeInsets.only(
-                          top: totalTopHeaderHeight + 10,
-                          bottom: 20,
-                        ),
-                        child: QuranPageWidget(
-                          fontSizeController: _fontSizeController,
-                          scaleFactor: _scaleFactor,
-                          pageNumber: index + 1,
-                          highlightedVerseListenable: _highlightedVerseNotifier,
-                          highlightedBlockKey: _highlightedBlockKey,
-                          settingsController: widget.settingsController,
-                          onVerseTap: _onVerseTapped,
-                          bookmarkRevision: bookmarkRevision,
-                          onBookmarkChanged: () => bookmarkRevision.value++,
+                      return RepaintBoundary(
+                        child: SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
+                          padding: EdgeInsets.only(
+                            top: totalTopHeaderHeight + 10,
+                            bottom: 20,
+                          ),
+                          child: QuranPageWidget(
+                            fontSizeController: _fontSizeController,
+                            scaleFactor: _scaleFactor,
+                            pageNumber: index + 1,
+                            highlightedVerseListenable:
+                                _highlightedVerseNotifier,
+                            highlightedBlockKey: _highlightedBlockKey,
+                            settingsController: widget.settingsController,
+                            onVerseTap: _onVerseTapped,
+                            bookmarkRevision: bookmarkRevision,
+                            onBookmarkChanged: () => bookmarkRevision.value++,
+                          ),
                         ),
                       );
                     },
@@ -830,16 +834,17 @@ class _SurahHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S(settingsController.language);
     final isAr = settingsController.language == 'ar';
-    final surahName = isAr
-        ? Quran.instance.getSurahNameArabic(surah.surahNumber)
-        : Quran.instance.getSurahName(surah.surahNumber);
+    final surahNameRu = Quran.instance.getSurahName(surah.surahNumber);
+    final surahMeaningRu =
+        Quran.instance.getSurahMeaningRussian(surah.surahNumber);
+    final surahNameAr = Quran.instance.getSurahNameArabic(surah.surahNumber);
 
     String formatNum(int n) => isAr ? getArabicNumber(n) : n.toString();
 
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 24, top: 4),
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       decoration: BoxDecoration(
         border: Border.symmetric(
           horizontal: BorderSide(color: context.colorScheme.primary),
@@ -854,38 +859,67 @@ class _SurahHeader extends StatelessWidget {
           fontSize: fontSize - 6,
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Flexible(
-              child: Wrap(
-                spacing: 5,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(s.surahOrder),
-                  Text('(${formatNum(surah.surahNumber)})'),
-                ],
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.center,
+                child: Wrap(
+                  spacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(s.surahLabel),
+                    Text('(${formatNum(surah.surahNumber)})'),
+                  ],
+                ),
               ),
             ),
-            Text(
-              '${s.surahLabel} $surahName',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: fontSize,
-                height: 1.2,
-                fontFamily: isAr ? fontFamily.name : null,
-                color: context.colorScheme.primary,
-              ),
-            ),
-            Flexible(
-              child: Wrap(
-                spacing: 5,
-                crossAxisAlignment: WrapCrossAlignment.center,
+            Expanded(
+              flex: 5,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(s.surahVerses),
                   Text(
-                    '(${formatNum(Quran.instance.getVerseCount(surah.surahNumber))})',
+                    'سورة $surahNameAr',
+                    textAlign: TextAlign.center,
+                    textDirection: TextDirection.rtl,
+                    style: TextStyle(
+                      fontSize: fontSize + 2,
+                      height: 1.25,
+                      fontFamily: fontFamily.name,
+                      color: context.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
+                  const SizedBox(height: 2),
+                  if (!isAr)
+                    Text(
+                      '$surahNameRu — $surahMeaningRu',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: (fontSize - 8).clamp(12.0, 20.0),
+                        height: 1.2,
+                        fontWeight: FontWeight.w500,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                 ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.center,
+                child: Wrap(
+                  spacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(s.surahVerses),
+                    Text(
+                      '(${formatNum(Quran.instance.getVerseCount(surah.surahNumber))})',
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -977,6 +1011,7 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
     _highlight = widget.highlightedVerseListenable.value;
     widget.highlightedVerseListenable.addListener(_onHighlightChanged);
     widget.bookmarkRevision.addListener(_onBookmarkRevisionChanged);
+    widget.settingsController.addListener(_onSettingsChanged);
     _refreshIndicators();
   }
 
@@ -995,13 +1030,23 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
       oldWidget.bookmarkRevision.removeListener(_onBookmarkRevisionChanged);
       widget.bookmarkRevision.addListener(_onBookmarkRevisionChanged);
     }
+
+    if (oldWidget.settingsController != widget.settingsController) {
+      oldWidget.settingsController.removeListener(_onSettingsChanged);
+      widget.settingsController.addListener(_onSettingsChanged);
+    }
   }
 
   @override
   void dispose() {
     widget.highlightedVerseListenable.removeListener(_onHighlightChanged);
     widget.bookmarkRevision.removeListener(_onBookmarkRevisionChanged);
+    widget.settingsController.removeListener(_onSettingsChanged);
     super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    if (mounted) setState(() {});
   }
 
   void _onHighlightChanged() {
@@ -1090,17 +1135,6 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
   }
 
   TextAlign _calculateAlignment() {
-    final verseCount = Quran.instance.getVerseCount(widget.surahNumber);
-
-    // Short surahs: center
-    if (verseCount <= 20) return TextAlign.center;
-    if (MediaQuery.of(context).orientation == Orientation.landscape) {
-      return TextAlign.justify;
-    }
-
-    // Large font: center (few words per line)
-    if (widget.fontSize > 34) return TextAlign.center;
-
     return switch (widget.settingsController.textAlign) {
       TextAlignOption.center => TextAlign.center,
       TextAlignOption.start => TextAlign.start,

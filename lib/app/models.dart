@@ -113,7 +113,7 @@ class BookmarkCategory {
   Map<String, dynamic> toJson() => {
     'id': id,
     'title': title,
-    'color': color.toARGB32(),
+    'color': color.value,
   };
 
   BookmarkCategory copyWith({String? id, String? title, Color? color}) {

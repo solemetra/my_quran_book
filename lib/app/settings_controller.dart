@@ -12,8 +12,8 @@ class SettingsController extends ChangeNotifier {
 
   final SettingsService settingsService;
 
-  String _language = 'ar';
-  FontFamily _fontFamily = FontFamily.rustam;
+  String _language = 'ru';
+  FontFamily _fontFamily = FontFamily.hafs;
   FontWeight _fontWeight = FontWeight.w500;
   AppTheme _appTheme = AppTheme.myQuran;
   bool _isHorizontalScrolling = true;
@@ -22,7 +22,7 @@ class SettingsController extends ChangeNotifier {
   bool _supportsDynamicColor = false;
   ColorScheme? _deviceLightScheme;
   ColorScheme? _deviceDarkScheme;
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
   bool _useTrueBlackBgColor = false;
   HizbDisplay _hizbDisplay = HizbDisplay.hidden;
 
@@ -44,8 +44,7 @@ class SettingsController extends ChangeNotifier {
   ColorScheme? get deviceDarkScheme => _deviceDarkScheme;
   HizbDisplay get hizbDisplay => _hizbDisplay;
 
-  FontWeight get fontWeightForCurrentFamily =>
-      fontFamily == FontFamily.rustam ? FontWeight.w500 : _fontWeight;
+  FontWeight get fontWeightForCurrentFamily => _fontWeight;
 
   // ── Setters ──
 

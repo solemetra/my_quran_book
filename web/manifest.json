@@ -1,9 +1,9 @@
 {
-    "name": "My Quran",
-    "short_name": "My Quran",
+    "name": "Коран",
+    "short_name": "Коран",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0F766E",
+    "background_color": "#000000",
     "theme_color": "#0175C2",
     "description": "A lightweight, offline Quran reading app",
     "orientation": "portrait-primary",

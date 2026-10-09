@@ -1,8 +1,10 @@
 [Desktop Entry]
-Name=My Quran
+Name=Коран
 GenericName=Holy Quran
+GenericName[ru]=Священный Коран
 GenericName[ar]=القرآن الكريم
 Comment=A lightweight, offline Quran with search
+Comment[ru]=Удобное приложение для чтения Корана офлайн
 Comment[ar]=تطبيق قرآن كريم خفيف، يعمل بدون إنترنت ويدعم البحث
 Exec=my_quran
 Icon=my_quran

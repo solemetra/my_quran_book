@@ -3,16 +3,16 @@ description: A minimal app to read the Quran.
 license: GPL-3.0-or-later
 
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
-version: 1.7.6+23
+version: 1.0.0+1
 
 environment:
-    sdk: ">=3.10.0 <4.0.0"
-    flutter: ">=3.38.5"
+    sdk: ">=3.5.0 <4.0.0"
+    flutter: ">=3.24.0"
 
 dependencies:
-    collection: ^1.19.1
-    dynamic_color: ^1.8.1
-    file_picker: ^10.3.10
+    collection: ^1.18.0
+    dynamic_color: 1.7.0
+    file_picker: ^8.1.7
     flutter:
         sdk: flutter
     flutter_localizations:
@@ -29,7 +29,7 @@ dev_dependencies:
     flutter_test:
         sdk: flutter
     flutter_launcher_icons: ^0.14.4
-    very_good_analysis: ^10.0.0
+    very_good_analysis: ^6.0.0
 
 # The following section is specific to Flutter.
 flutter:

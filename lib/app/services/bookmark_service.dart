@@ -16,6 +16,8 @@ class BookmarkService {
   static const String _categoriesKey = 'bookmark_categories';
 
   SharedPreferences? _prefs;
+  List<VerseBookmark>? _cachedBookmarks;
+  List<BookmarkCategory>? _cachedCategories;
 
   Future<SharedPreferences> get _preferences async {
     _prefs ??= await SharedPreferences.getInstance();
@@ -45,11 +47,12 @@ class BookmarkService {
   // ──────────────────────────────────────────────
 
   Future<List<BookmarkCategory>> getCategories() async {
+    if (_cachedCategories != null) return List.from(_cachedCategories!);
     final prefs = await _preferences;
     final raw = prefs.getString(_categoriesKey);
     if (raw == null) {
-      // First time: persist defaults then return them
       await _saveCategories(defaultCategories);
+      _cachedCategories = List.from(defaultCategories);
       return List.from(defaultCategories);
     }
     final List<dynamic> decoded = jsonDecode(raw) as List<dynamic>;
@@ -57,13 +60,13 @@ class BookmarkService {
         .map((e) => BookmarkCategory.fromJson(e as Map<String, dynamic>))
         .toList();
 
-    // Safety: ensure default exists
     if (!categories.any((c) => c.id == 'default')) {
       categories.insert(0, _defaultCategory);
       await _saveCategories(categories);
     }
 
-    return categories;
+    _cachedCategories = categories;
+    return List.from(categories);
   }
 
   Future<BookmarkCategory?> getCategoryById(String id) async {
@@ -76,17 +79,23 @@ class BookmarkService {
   }
 
   List<BookmarkCategory> getCategoriesSync() {
+    if (_cachedCategories != null) return _cachedCategories!;
     final raw = _prefs?.getString(_categoriesKey);
-    if (raw == null) return List.from(defaultCategories);
+    if (raw == null) {
+      _cachedCategories = List.from(defaultCategories);
+      return _cachedCategories!;
+    }
     final List<dynamic> decoded = jsonDecode(raw) as List<dynamic>;
     final categories = decoded
         .map((e) => BookmarkCategory.fromJson(e as Map<String, dynamic>))
         .toList();
 
     if (!categories.any((c) => c.id == 'default')) {
-      return [_defaultCategory, ...categories];
+      _cachedCategories = [_defaultCategory, ...categories];
+    } else {
+      _cachedCategories = categories;
     }
-    return categories;
+    return _cachedCategories!;
   }
 
   Future<void> addCategory(BookmarkCategory category) async {
@@ -142,6 +151,7 @@ class BookmarkService {
   }
 
   Future<void> _saveCategories(List<BookmarkCategory> categories) async {
+    _cachedCategories = List.from(categories);
     final prefs = await _preferences;
     final encoded = jsonEncode(categories.map((c) => c.toJson()).toList());
     await prefs.setString(_categoriesKey, encoded);
@@ -152,22 +162,32 @@ class BookmarkService {
   // ──────────────────────────────────────────────
 
   Future<List<VerseBookmark>> getBookmarks() async {
+    if (_cachedBookmarks != null) return List.from(_cachedBookmarks!);
     final prefs = await _preferences;
     final raw = prefs.getString(_bookmarksKey);
-    if (raw == null) return [];
+    if (raw == null) {
+      _cachedBookmarks = [];
+      return [];
+    }
     final List<dynamic> decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
+    _cachedBookmarks = decoded
         .map((e) => VerseBookmark.fromJson(e as Map<String, dynamic>))
         .toList();
+    return List.from(_cachedBookmarks!);
   }
 
   List<VerseBookmark> getBookmarksSync() {
+    if (_cachedBookmarks != null) return _cachedBookmarks!;
     final raw = _prefs?.getString(_bookmarksKey);
-    if (raw == null) return [];
+    if (raw == null) {
+      _cachedBookmarks = [];
+      return _cachedBookmarks!;
+    }
     final List<dynamic> decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
+    _cachedBookmarks = decoded
         .map((e) => VerseBookmark.fromJson(e as Map<String, dynamic>))
         .toList();
+    return _cachedBookmarks!;
   }
 
   bool isBookmarked(int surah, int verse) {
@@ -261,6 +281,7 @@ class BookmarkService {
   }
 
   Future<void> _saveBookmarks(List<VerseBookmark> bookmarks) async {
+    _cachedBookmarks = List.from(bookmarks);
     final prefs = await _preferences;
     final encoded = jsonEncode(bookmarks.map((b) => b.toJson()).toList());
     await prefs.setString(_bookmarksKey, encoded);

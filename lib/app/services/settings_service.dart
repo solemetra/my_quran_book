@@ -19,7 +19,10 @@ class SettingsService {
   }
 
   Future<String> loadLanguage() async {
-    final language = await _prefs.getString('language') ?? 'ar';
+    final language = await _prefs.getString('language');
+    if (language == null || language == 'ar' || language == 'en') {
+      return 'ru';
+    }
     return language;
   }
 
@@ -29,11 +32,10 @@ class SettingsService {
 
   Future<FontFamily> loadFontFamily() async {
     final index = await _prefs.getInt('fontFamily');
-    if (index != null && index >= 0 && index < FontFamily.values.length) {
-      return FontFamily.values[index];
+    if (index != FontFamily.hafs.index) {
+      await setFontFamily(FontFamily.hafs);
     }
-    unawaited(setFontFamily(FontFamily.defaultFontFamily)); // update if invalid
-    return FontFamily.defaultFontFamily;
+    return FontFamily.hafs;
   }
 
   Future<void> setFontSize(int fontSize) async {
@@ -50,7 +52,7 @@ class SettingsService {
   }
 
   Future<ThemeMode> loadTheme() async {
-    final themeIndex = await _prefs.getInt('theme') ?? 0;
+    final themeIndex = await _prefs.getInt('theme') ?? ThemeMode.light.index;
     return ThemeMode.values[themeIndex];
   }
 
@@ -60,8 +62,8 @@ class SettingsService {
 
   Future<FontWeight> loadFontWeight() async {
     final index = await _prefs.getInt('fontWeight');
-    if (index != null && index >= 0 && index < FontWeight.values.length) {
-      return FontWeight.values[index];
+    if (index != FontWeight.w500.index) {
+      await setFontWeight(FontWeight.w500);
     }
     return FontWeight.w500;
   }
@@ -114,7 +116,8 @@ class SettingsService {
     return switch (value) {
       'light' => ThemeMode.light,
       'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
+      'system' => ThemeMode.system,
+      _ => ThemeMode.light,
     };
   }
 

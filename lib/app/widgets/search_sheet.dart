@@ -8,6 +8,7 @@ import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/search/processor.dart';
 import 'package:my_quran/app/services/search_service.dart';
 import 'package:my_quran/app/utils.dart';
+import 'package:my_quran/quran/data/surah_data.dart';
 import 'package:my_quran/quran/quran.dart';
 
 class QuranSearchBottomSheet extends StatefulWidget {
@@ -31,6 +32,7 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
   Timer? _debounce;
 
   bool _isSearching = false;
+  List<int> _matchedSurahs = [];
 
   SearchMatchMode _matchMode = SearchMatchMode.auto;
   SearchOperator _operator = SearchOperator.and;
@@ -62,11 +64,84 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
 
   int _searchSeq = 0;
 
+  List<int> _findMatchingSurahs(String query) {
+    final clean = query.trim().toLowerCase();
+    if (clean.isEmpty) return const [];
+
+    String stripPrefixes(String s) {
+      var res = s.toLowerCase().trim();
+      if (res.startsWith('сура ')) res = res.substring(5).trim();
+      if (res.startsWith('сура')) res = res.substring(4).trim();
+      if (res.startsWith('surah ')) res = res.substring(6).trim();
+      if (res.startsWith('surah')) res = res.substring(5).trim();
+      res = res
+          .replaceAll('я', 'йа')
+          .replaceAll('ю', 'йу')
+          .replaceAll(RegExp(r"['`’\-\s]"), '');
+      return res;
+    }
+
+    final cleanSimplified = stripPrefixes(clean);
+    final asNum = int.tryParse(cleanSimplified);
+    if (asNum != null && asNum >= 1 && asNum <= 114) {
+      return [asNum];
+    }
+
+    final normArabic = ArabicTextProcessor.normalize(clean);
+    final List<int> matched = [];
+
+    for (int i = 0; i < 114; i++) {
+      final surahNum = i + 1;
+      final ruName = surahNamesRussian[i];
+      final enName = surah[i]['name'] as String;
+      final arName = surah[i]['arabic'] as String;
+
+      final ruClean = stripPrefixes(ruName);
+      final ruMeaning = surahMeaningsRussian[i];
+      final ruMeaningClean = stripPrefixes(ruMeaning);
+      final enClean = stripPrefixes(enName);
+      final arNorm = ArabicTextProcessor.normalize(arName);
+
+      bool match = false;
+      if (ruClean.contains(cleanSimplified) ||
+          ruMeaningClean.contains(cleanSimplified)) {
+        match = true;
+      } else if (enClean.contains(cleanSimplified)) {
+        match = true;
+      } else if (normArabic.isNotEmpty && arNorm.contains(normArabic)) {
+        match = true;
+      }
+
+      if (match) {
+        matched.add(surahNum);
+      }
+    }
+
+    matched.sort((a, b) {
+      final aRu = stripPrefixes(surahNamesRussian[a - 1]);
+      final bRu = stripPrefixes(surahNamesRussian[b - 1]);
+      final aExact = aRu == cleanSimplified;
+      final bExact = bRu == cleanSimplified;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+
+      final aStarts = aRu.startsWith(cleanSimplified);
+      final bStarts = bRu.startsWith(cleanSimplified);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+
+      return a.compareTo(b);
+    });
+
+    return matched;
+  }
+
   Future<void> _performSearch(String query) async {
     final mySeq = ++_searchSeq;
 
     if (query.trim().isEmpty) {
       setState(() {
+        _matchedSurahs = [];
         _response = const SearchResponse(
           hits: [],
           effectiveMode: SearchMatchMode.auto,
@@ -80,7 +155,11 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
       return;
     }
 
-    setState(() => _isSearching = true);
+    final matched = _findMatchingSurahs(query);
+    setState(() {
+      _matchedSurahs = matched;
+      _isSearching = true;
+    });
 
     final resp = await SearchService.search(
       query,
@@ -101,6 +180,14 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
     final colorScheme = Theme.of(context).colorScheme;
     final hits = _response.hits;
     final isAr = widget.language == 'ar';
+    final hasNoResults = _matchedSurahs.isEmpty &&
+        hits.isEmpty &&
+        _controller.text.trim().isNotEmpty &&
+        !_isSearching;
+    final hasSectionHeader = _matchedSurahs.isNotEmpty && hits.isNotEmpty;
+    final totalCount = _matchedSurahs.length +
+        (hasSectionHeader ? 1 : 0) +
+        hits.length;
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.85,
@@ -143,7 +230,7 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
 
           // --- Results List ---
           Expanded(
-            child: hits.isEmpty && _controller.text.isNotEmpty && !_isSearching
+            child: hasNoResults
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -164,11 +251,34 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
                 : Stack(
                     children: [
                       ListView.separated(
-                        itemCount: hits.length,
+                        itemCount: totalCount,
                         separatorBuilder: (c, i) =>
                             const Divider(height: 1, indent: 16, endIndent: 16),
                         itemBuilder: (context, index) {
-                          final hit = hits[index];
+                          if (index < _matchedSurahs.length) {
+                            return _buildSurahCard(
+                              context,
+                              _matchedSurahs[index],
+                            );
+                          }
+                          if (hasSectionHeader &&
+                              index == _matchedSurahs.length) {
+                            return Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                              child: Text(
+                                'Найденные аяты (${_response.totalHits}):',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            );
+                          }
+                          final hitIndex = index -
+                              _matchedSurahs.length -
+                              (hasSectionHeader ? 1 : 0);
+                          final hit = hits[hitIndex];
                           return SearchResultItem(
                             language: widget.language,
                             verseFontFamily: widget.verseFontFamily,
@@ -210,12 +320,102 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
     );
   }
 
+  Widget _buildSurahCard(BuildContext context, int surahNum) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final ruName = surahNamesRussian[surahNum - 1];
+    final ruMeaning = surahMeaningsRussian[surahNum - 1];
+    final arName = surah[surahNum - 1]['arabic'] as String;
+    final totalAyah = surah[surahNum - 1]['aya'] as int;
+    final page = Quran.instance.getPageNumber(surahNum, 1);
+    final isMakkah = surah[surahNum - 1]['place'] == 'Makkah';
+    final placeRu = isMakkah ? 'Мекканская' : 'Мединская';
+
+    return InkWell(
+      onTap: () {
+        Navigator.pop(context);
+        widget.onNavigateToPage(page, surah: surahNum, verse: 1);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer.applyOpacity(0.6),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$surahNum',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Сура $ruName ($ruMeaning)',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'سُورَةُ $arName',
+                        textDirection: TextDirection.rtl,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: widget.verseFontFamily.name,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$placeRu • $totalAyah аятов • Стр. $page',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: colorScheme.outline,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFiltersBar(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     final tokensCount = ArabicTextProcessor.tokenize(
       _controller.text,
     ).map(ArabicTextProcessor.normalize).where((t) => t.isNotEmpty).length;
+
+    if (tokensCount == 0) {
+      return const SizedBox.shrink();
+    }
 
     final showOperator = tokensCount >= 2;
 
@@ -238,7 +438,6 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
 
     Widget countWidget() {
       if (total == 0) return const SizedBox.shrink();
-      final isAr = widget.language == 'ar';
       final countText = _response.isTruncated 
           ? s.showingNofM(shown, total)
           : s.resultsCountN(total);
@@ -303,9 +502,9 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 8,
         children: [
           modeSegmented(),
+          const SizedBox(height: 8),
 
           Wrap(
             alignment: WrapAlignment.spaceBetween,

@@ -14,6 +14,7 @@ import 'package:my_quran/app/services/settings_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/theme.dart';
 import 'package:my_quran/app/utils.dart';
+import 'package:my_quran/app/quran_page_text_cache.dart';
 import 'package:my_quran/quran/quran.dart';
 
 Future<void> main() async {
@@ -29,6 +30,9 @@ Future<void> main() async {
 
   await Quran.instance.initialize(fontFamily: settingsController.fontFamily);
   await FontSizeController().initialize();
+
+  // Background preload all 604 pages into cache for locked 120 FPS performance
+  unawaited(Future.microtask(() => QuranPageTextCache.instance.preloadAll()));
 
   SearchService.plainVerseProvider = Quran.instance.getVerseInPlainText;
 
@@ -83,10 +87,10 @@ class MyApp extends StatelessWidget {
             );
 
             return MaterialApp(
-              title: 'My Quran',
+              title: 'Коран',
               debugShowCheckedModeBanner: false,
               locale: Locale(settingsController.language),
-              supportedLocales: const [Locale('ar'), Locale('en')],
+              supportedLocales: const [Locale('ru'), Locale('ar'), Locale('en')],
               localizationsDelegates: GlobalMaterialLocalizations.delegates,
               theme: themes.theme,
               darkTheme: themes.darkTheme,

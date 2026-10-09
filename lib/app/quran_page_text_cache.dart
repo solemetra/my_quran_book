@@ -48,30 +48,39 @@ class QuranPageTextCache {
   // Bump this when Quran.data changes (i.e., switching JSON dataset).
   int _revision = 0;
 
-  // LRU: key = (revision, pageNumber)
-  final _lru = <({int rev, int page}), QuranPageTextModel>{};
-  final int maxEntries = 30;
+  // Cache all 604 pages in memory for 120 FPS buttery-smooth scrolling
+  final _cache = <({int rev, int page}), QuranPageTextModel>{};
+  static const int maxEntries = 604;
 
   void invalidateForNewQuranData() {
     _revision++;
-    _lru.clear();
+    _cache.clear();
+  }
+
+  void preloadAll() {
+    for (int p = 1; p <= Quran.totalPagesCount; p++) {
+      get(p);
+    }
+  }
+
+  void prewarmAround(int pageNumber, {int window = 4}) {
+    for (int p = pageNumber - window; p <= pageNumber + window; p++) {
+      if (p >= 1 && p <= Quran.totalPagesCount) {
+        get(p);
+      }
+    }
   }
 
   QuranPageTextModel get(int pageNumber) {
     final key = (rev: _revision, page: pageNumber);
 
-    final cached = _lru.remove(key);
+    final cached = _cache[key];
     if (cached != null) {
-      _lru[key] = cached;
       return cached;
     }
 
     final built = _build(pageNumber);
-    _lru[key] = built;
-
-    while (_lru.length > maxEntries) {
-      _lru.remove(_lru.keys.first);
-    }
+    _cache[key] = built;
     return built;
   }
 

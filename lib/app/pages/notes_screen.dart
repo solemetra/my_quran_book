@@ -176,7 +176,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                     child: DropdownButtonFormField<int?>(
-                      initialValue: _surahFilter,
+                      value: _surahFilter,
                       decoration: _inputDecoration(labelText: s.filterBySurah),
                       items: [
                         DropdownMenuItem<int?>(child: Text(s.allSurahs)),
@@ -184,7 +184,7 @@ class _NotesScreenState extends State<NotesScreen> {
                           DropdownMenuItem<int?>(
                             value: i,
                             child: Text(
-                              '${s.surahLabel} ${Quran.instance.getSurahNameArabic(i)}',
+                              '${s.surahLabel} ${s.isAr ? Quran.instance.getSurahNameArabic(i) : Quran.instance.getSurahName(i)}',
                             ),
                           ),
                       ],
@@ -205,12 +205,13 @@ class _NotesScreenState extends State<NotesScreen> {
                         : ListView.separated(
                             padding: const EdgeInsets.all(12),
                             itemCount: items.length,
-                            separatorBuilder: (_, _) =>
+                            separatorBuilder: (_, __) =>
                                 const SizedBox(height: 8),
                             itemBuilder: (context, i) {
                               final n = items[i];
-                              final surahName = Quran.instance
-                                  .getSurahNameArabic(n.surah);
+                              final surahName = s.isAr
+                                  ? Quran.instance.getSurahNameArabic(n.surah)
+                                  : Quran.instance.getSurahName(n.surah);
 
                               final verseNum = s.isAr ? getArabicNumber(n.verse) : n.verse.toString();
                               return Card(

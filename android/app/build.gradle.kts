@@ -19,9 +19,10 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.dmouayad.my_quran"
-    compileSdkVersion = "android-36"
-    ndkVersion = "29.0.14206865"
+    namespace = "com.solemetra.quran"
+    compileSdkVersion = "android-35"
+    buildToolsVersion = "35.0.0"
+    ndkVersion = "26.1.10909125"
 
     compileOptions {
             sourceCompatibility = JavaVersion.VERSION_17
@@ -33,18 +34,15 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.dmouayad.my_quran"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        applicationId = "com.solemetra.quran"
         minSdk = flutter.minSdkVersion
-        targetSdk = 36
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
     signingConfigs {
-        create("release") {
-            if (keystorePropertiesFile.exists()) {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
                 storeFile = file(keystoreProperties["storeFile"] as String)
@@ -62,7 +60,11 @@ android {
 
     buildTypes {
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
@@ -104,7 +106,7 @@ class ApplicationVariantAction : Action<ApplicationVariant> {
                 val architecture = abi ?: "universal"
 
                 output.outputFileName =
-                    "MyQuran-v${versionName}-${architecture}-${versionCode}-${builtType}.apk"
+                    "QuranBook-v${versionName}-${architecture}-${versionCode}-${builtType}.apk"
             }
         }
     }

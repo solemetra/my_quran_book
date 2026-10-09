@@ -75,8 +75,8 @@ class BackupService {
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'application/gzip')],
-        subject: 'My Quran Backup',
-        text: 'Backup file (bookmarks + notes).',
+        subject: 'Резервная копия Корана',
+        text: 'Файл резервной копии (закладки и заметки).',
       ),
     );
   }
@@ -197,7 +197,7 @@ class BackupService {
       if (appVersion.isNotEmpty || appBuild != null)
         'app': {
           if (appVersion.isNotEmpty) 'version': appVersion,
-          'build': ?appBuild,
+          if (appBuild != null) 'build': appBuild,
         },
       'data': {
         'bookmarkCategories': categories.map((c) => c.toJson()).toList(),

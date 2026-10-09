@@ -41,8 +41,16 @@ class _QuranNavigationBottomSheetState
   int _currentJuz = 1;
   int _currentVerse = 1;
 
-  bool _isUpdating = false;
   Timer? _debounce;
+  int _lastHapticTime = 0;
+
+  void _safeHaptic() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _lastHapticTime > 60) {
+      _lastHapticTime = now;
+      HapticFeedback.selectionClick();
+    }
+  }
 
   S get s => S(widget.settingsController.language);
 
@@ -80,65 +88,89 @@ class _QuranNavigationBottomSheetState
     super.dispose();
   }
 
-  void _triggerUpdate(VoidCallback updateFn) {
-    if (_isUpdating) return;
-
-    HapticFeedback.selectionClick();
+  void _onSurahChanged(int index) {
+    final surah = index + 1;
+    if (surah == _currentSurah) return;
+    _currentSurah = surah;
+    _currentPage = Quran.instance.getPageNumber(
+      surah,
+      _currentVerse.clamp(1, Quran.instance.getVerseCount(surah)),
+    );
+    _safeHaptic();
     setState(() {});
 
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
+    _debounce = Timer(const Duration(milliseconds: 250), () {
       if (!mounted) return;
-      setState(() => _isUpdating = true);
-
-      updateFn();
-
-      Future.delayed(const Duration(milliseconds: 350), () {
-        if (mounted) setState(() => _isUpdating = false);
-      });
-    });
-  }
-
-  void _onSurahChanged(int index) {
-    final surah = index + 1;
-    _currentSurah = surah;
-    _triggerUpdate(() {
       _currentVerse = 1;
       _currentPage = Quran.instance.getPageNumber(surah, 1);
       _currentJuz = Quran.instance.getJuzNumber(surah, 1);
-      _animateAll();
+
+      if (_juzController.hasClients) {
+        _juzController.animateToItem(
+          _currentJuz - 1,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+      if (_verseController.hasClients) {
+        _verseController.jumpToItem(0);
+      }
+      setState(() {});
     });
   }
 
   void _onJuzChanged(int index) {
     final juz = index + 1;
+    if (juz == _currentJuz) return;
     _currentJuz = juz;
-    _triggerUpdate(() {
+    _safeHaptic();
+    setState(() {});
+
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
       final surahs = Quran.instance.getSurahAndVersesFromJuz(juz);
       _currentSurah = surahs.keys.first;
       _currentVerse = surahs[_currentSurah]!.first;
       _currentPage = Quran.instance.getPageNumber(_currentSurah, _currentVerse);
-      _animateAll();
+
+      if (_surahController.hasClients) {
+        _surahController.animateToItem(
+          _currentSurah - 1,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+      if (_verseController.hasClients) {
+        _verseController.jumpToItem(_currentVerse - 1);
+      }
+      setState(() {});
     });
   }
 
   void _onVerseChanged(int index) {
     final verse = index + 1;
+    if (verse == _currentVerse) return;
     _currentVerse = verse;
-    _triggerUpdate(() {
-      _currentPage = Quran.instance.getPageNumber(_currentSurah, verse);
-      _currentJuz = Quran.instance.getJuzNumber(_currentSurah, verse);
-      _animateAll(skipVerse: true);
-    });
-  }
+    _currentPage = Quran.instance.getPageNumber(_currentSurah, verse);
+    _safeHaptic();
+    setState(() {});
 
-  void _animateAll({bool skipVerse = false}) {
-    _surahController.jumpToItem(_currentSurah - 1);
-    _juzController.jumpToItem(_currentJuz - 1);
-    if (!skipVerse) {
-      final max = Quran.instance.getVerseCount(_currentSurah);
-      _verseController.jumpToItem((_currentVerse - 1).clamp(0, max - 1));
-    }
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      _currentJuz = Quran.instance.getJuzNumber(_currentSurah, verse);
+
+      if (_juzController.hasClients) {
+        _juzController.animateToItem(
+          _currentJuz - 1,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+      setState(() {});
+    });
   }
 
   String _surahName(int surah) => s.isAr
@@ -169,13 +201,15 @@ class _QuranNavigationBottomSheetState
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                _surahName(_currentSurah),
+                s.isAr
+                    ? 'سُورَةُ ${_surahName(_currentSurah)} • ${s.page} ${_toArabicNumber(_currentPage)}'
+                    : 'Сура ${_surahName(_currentSurah)} • Стр. $_currentPage',
                 textAlign: TextAlign.center,
                 textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: s.isAr ? 22 : 18,
+                  fontSize: s.isAr ? 24 : 20,
                   fontWeight: FontWeight.bold,
                   color: colorScheme.primary,
                   fontFamily: s.isAr ? FontFamily.hafs.name : null,
@@ -189,26 +223,30 @@ class _QuranNavigationBottomSheetState
                 children: [
                   Center(
                     child: Container(
-                      height: 44,
-                      margin: const EdgeInsets.only(top: 26),
+                      height: 48,
+                      margin: const EdgeInsets.only(top: 26, left: 12, right: 12),
                       decoration: BoxDecoration(
                         color: colorScheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                   ),
                   Row(
                     children: [
                       Expanded(
+                        flex: 5,
                         child: _buildFlatWheel(
                           controller: _surahController,
                           count: Quran.totalSurahCount,
                           label: s.surah,
+                          labelAlignment: Alignment.centerLeft,
                           onChanged: _onSurahChanged,
                           itemBuilder: (i) =>
-                              _buildNumberItem(i + 1, _currentSurah),
+                              _buildSurahWheelItem(i + 1, _currentSurah),
                         ),
                       ),
                       Expanded(
+                        flex: 2,
                         child: _buildFlatWheel(
                           controller: _juzController,
                           count: Quran.totalJuzCount,
@@ -219,6 +257,7 @@ class _QuranNavigationBottomSheetState
                         ),
                       ),
                       Expanded(
+                        flex: 2,
                         child: _buildFlatWheel(
                           controller: _verseController,
                           count: Quran.instance.getVerseCount(_currentSurah),
@@ -274,26 +313,34 @@ class _QuranNavigationBottomSheetState
     required String label,
     required ValueChanged<int> onChanged,
     required Widget Function(int) itemBuilder,
+    Alignment labelAlignment = Alignment.center,
   }) {
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.secondary,
+          child: Align(
+            alignment: labelAlignment,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: labelAlignment == Alignment.centerLeft ? 16 : 0,
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
             ),
           ),
         ),
         Expanded(
           child: ListWheelScrollView.useDelegate(
             controller: controller,
-            itemExtent: 44,
+            itemExtent: 48,
             physics: const FixedExtentScrollPhysics(),
-            changeReportingBehavior: ChangeReportingBehavior.onScrollEnd,
             diameterRatio: 100,
             perspective: 0.0001,
             onSelectedItemChanged: onChanged,
@@ -319,17 +366,48 @@ class _QuranNavigationBottomSheetState
     );
   }
 
+  Widget _buildSurahWheelItem(int number, int selected) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isSelected = number == selected;
+    final surahName = s.isAr
+        ? Quran.instance.getSurahNameArabic(number)
+        : Quran.instance.getSurahName(number);
+    final meaning = s.isAr
+        ? ''
+        : ' (${Quran.instance.getSurahMeaningRussian(number)})';
+    final numStr = s.isAr ? _toArabicNumber(number) : '$number';
+
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.only(left: 16, right: 6),
+      child: Text(
+        '$numStr. $surahName$meaning',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.left,
+        style: TextStyle(
+          fontSize: isSelected ? 20 : 16,
+          color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          fontFamily: s.isAr ? FontFamily.hafs.name : null,
+        ),
+      ),
+    );
+  }
+
   Widget _buildNumberItem(int number, int selected) {
     final colorScheme = Theme.of(context).colorScheme;
     final isSelected = number == selected;
-    return Text(
-      s.isAr ? _toArabicNumber(number) : number.toString(),
-      style: TextStyle(
-        fontSize: 21,
-        color: isSelected ? colorScheme.primary : colorScheme.onSurface,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        fontFamily:
-            s.isAr ? FontFamily.arabicNumbersFontFamily.name : null,
+    return Center(
+      child: Text(
+        s.isAr ? _toArabicNumber(number) : number.toString(),
+        style: TextStyle(
+          fontSize: isSelected ? 20 : 16,
+          color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          fontFamily:
+              s.isAr ? FontFamily.arabicNumbersFontFamily.name : null,
+        ),
       ),
     );
   }

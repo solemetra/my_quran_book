@@ -1,6 +1,6 @@
 # Third-party notices
 
-This app bundles materials from upstream [My Quran](https://github.com/dmouayad/my_quran) and third parties. This fork (`solemetra/my_quran_book`) distributes them under the same conditions as the upstream project, plus GPL-3.0 for modified source code.
+This app bundles Quran data and third-party resources under GPL-3.0 for application source code.
 
 ## Quran text data
 
@@ -33,7 +33,3 @@ For exact license texts of dependencies, run:
 ```bash
 flutter pub licenses
 ```
-
-## Trademarks
-
-“My Quran”, “قرآني”, and `com.dmouayad.my_quran` refer to the upstream project by Mouayad Alhamwi. This fork is maintained separately and is not endorsed by the original author unless stated otherwise.

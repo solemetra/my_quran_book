@@ -5,22 +5,20 @@
 
   # My Quran Book
 
-  **Fork of [My Quran](https://github.com/dmouayad/my_quran) by [dmouayad](https://github.com/dmouayad)**  
   Licensed under [GNU GPL v3](LICENSE). Source: [solemetra/my_quran_book](https://github.com/solemetra/my_quran_book)
 
 </div>
 
 ---
 
-## About this fork
+## О проекте
 
-This repository is a **modified fork**, not the official My Quran release.
+Удобное, быстрое и полностью автономное приложение для чтения Священного Корана на планшетах и смартфонах.
 
 | | |
 |---|---|
-| **Upstream** | https://github.com/dmouayad/my_quran |
-| **This fork** | https://github.com/solemetra/my_quran_book |
-| **License** | GPL-3.0 (same as upstream) |
+| **Репозиторий** | https://github.com/solemetra/my_quran_book |
+| **Лицензия** | GPL-3.0 |
 
 ### Changes in this fork (vs upstream 1.7.6)
 

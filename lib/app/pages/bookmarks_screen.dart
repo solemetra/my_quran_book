@@ -135,7 +135,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                                   vertical: 8,
                                 ),
                                 itemCount: filtered.length,
-                                separatorBuilder: (_, _) =>
+                                separatorBuilder: (_, __) =>
                                     const SizedBox(height: 8),
                                 itemBuilder: (context, index) {
                                   return _buildBookmarkCard(
@@ -164,7 +164,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         scrollDirection: Axis.horizontal,
         itemCount: _categories.length + 1, // +1 for "All"
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           if (index == 0) {
             // "All" chip
