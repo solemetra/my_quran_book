@@ -81,6 +81,32 @@ class S {
   String get save => 'Сохранить';
   String get close => isAr ? 'إغلاق' : (isEn ? 'Close' : 'Закрыть');
 
+  // О приложении
+  String get aboutApp => isAr ? 'حول التطبيق' : (isEn ? 'About' : 'О приложении');
+  String get appName => 'Quran Book';
+  String get appDescription => isAr
+      ? 'مصحف إلكتروني بدون إنترنت وبدون إعلانات'
+      : (isEn ? 'Minimal offline Quran reading app without ads' : 'Удобный офлайн-Коран без рекламы');
+  String get sourceText => isAr ? 'مصدر النص' : (isEn ? 'Source text' : 'Источник текста');
+  String get sourceTextDesc => isAr
+      ? 'مجمع الملك فهد لطباعة المصحف الشريف (KFGQPC)'
+      : 'Комплекс имени Короля Фахда (KFGQPC, Медина)';
+  String get fontsAndRiwayah => isAr ? 'الروايات والخطوط' : (isEn ? 'Fonts & Narrations' : 'Шрифты и риваяты');
+  String get fontsAndRiwayahDesc => isAr
+      ? 'حفص وورش • خطوط عثمانية ومصحف المدينة'
+      : 'Хафс и Варш • Усманский шрифт и Медина';
+  String get privacyPolicy => isAr ? 'سياسة الخصوصية' : (isEn ? 'Privacy Policy' : 'Политика конфиденциальности');
+  String get privacyPolicyTapDesc => isAr
+      ? 'يعمل محلياً بالكامل دون اتصال • اضغط للتفاصيل'
+      : (isEn ? '100% offline • Tap to view' : '100% офлайн • Нажмите для просмотра');
+  String get shareApp => isAr ? 'مشاركة التطبيق' : (isEn ? 'Share app' : 'Поделиться приложением');
+  String get shareAppDesc => isAr
+      ? 'شارك التطبيق مع أهلك وأصدقائك'
+      : (isEn ? 'Share with family and friends' : 'Рассказать о приложении близким');
+  String get shareAppMessage => isAr
+      ? 'تطبيق Quran Book لقراءة القرآن الكريم بدون إنترنت وبدون إعلانات'
+      : 'Quran Book — удобное чтение Корана без интернета и рекламы.';
+
   // Статистика чтения
   String get readingStats => isAr ? 'إحصائيات القراءة' : 'Статистика чтения';
   String get readingTimeToday => isAr ? 'الوقت اليوم' : 'Время сегодня';

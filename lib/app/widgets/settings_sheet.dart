@@ -13,6 +13,7 @@ import 'package:my_quran/app/design_tokens.dart';
 import 'package:my_quran/app/widgets/khatm_celebration_dialog.dart';
 import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
 import 'package:my_quran/quran/quran.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SettingsSheet extends StatelessWidget {
   const SettingsSheet({
@@ -282,6 +283,117 @@ class SettingsSheet extends StatelessWidget {
                     ),
                   ],
                 ),
+
+                _groupTile(
+                  context: context,
+                  key: const PageStorageKey('settings_group_about_app'),
+                  icon: Icons.info_outline_rounded,
+                  title: s.aboutApp,
+                  subtitle: '${s.appName} • v1.0.0 (10)',
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              Icons.menu_book_rounded,
+                              size: 28,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      s.appName,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.secondaryContainer,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'v1.0.0 (10)',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: colorScheme.onSecondaryContainer,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  s.appDescription,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const _ThinDivider(),
+                    ListTile(
+                      leading: Icon(
+                        Icons.verified_outlined,
+                        color: colorScheme.primary,
+                      ),
+                      title: Text(s.sourceText),
+                      subtitle: Text(s.sourceTextDesc),
+                    ),
+                    const _ThinDivider(),
+                    ListTile(
+                      leading: Icon(
+                        Icons.font_download_outlined,
+                        color: colorScheme.primary,
+                      ),
+                      title: Text(s.fontsAndRiwayah),
+                      subtitle: Text(s.fontsAndRiwayahDesc),
+                    ),
+                    const _ThinDivider(),
+                    _ActionRow(
+                      icon: Icons.shield_outlined,
+                      title: s.privacyPolicy,
+                      subtitle: s.privacyPolicyTapDesc,
+                      onTap: () => _showPrivacyPolicyDialog(context, s, isAr),
+                    ),
+                    const _ThinDivider(),
+                    _ActionRow(
+                      icon: Icons.share_outlined,
+                      title: s.shareApp,
+                      subtitle: s.shareAppDesc,
+                      onTap: () {
+                        SharePlus.instance.share(
+                          ShareParams(text: s.shareAppMessage),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ],
             );
           },
@@ -365,6 +477,120 @@ class SettingsSheet extends StatelessWidget {
 
   String _extraDataSubtitle(BuildContext context, S s) {
     return s.backup;
+  }
+
+  void _showPrivacyPolicyDialog(BuildContext context, S s, bool isAr) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+        child: AlertDialog(
+          icon: Icon(
+            Icons.shield_outlined,
+            size: 32,
+            color: colorScheme.primary,
+          ),
+          title: Text(s.privacyPolicy),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isAr
+                      ? 'يلتزم تطبيق Quran Book بحماية خصوصيتك بشكل كامل وبأعلى المعايير:'
+                      : 'Приложение Quran Book уважает вашу конфиденциальность и создано для комфортного и безопасного чтения Священного Корана:',
+                  style: const TextStyle(fontWeight: FontWeight.w600, height: 1.4),
+                ),
+                const SizedBox(height: 12),
+                _privacyBullet(
+                  context,
+                  title: isAr ? '١٠٠٪ بدون إنترنت' : '100% Офлайн',
+                  desc: isAr
+                      ? 'يعمل التطبيق بالكامل محلياً على جهازك ولا يتطلب أي اتصال بالشبكة.'
+                      : 'Приложение работает автономно и не требует подключения к интернету для чтения, закладок и заметок.',
+                ),
+                const SizedBox(height: 8),
+                _privacyBullet(
+                  context,
+                  title: isAr ? 'لا نجمع أي بيانات' : 'Без сбора данных',
+                  desc: isAr
+                      ? 'لا نقوم بجمع أو حفظ أو إرسال أي بيانات شخصية أو معلومات عن جهازك.'
+                      : 'Мы не собираем, не храним и не передаем персональные данные, идентификаторы или аналитику.',
+                ),
+                const SizedBox(height: 8),
+                _privacyBullet(
+                  context,
+                  title: isAr ? 'بدون إعلانات' : 'Без рекламы и трекеров',
+                  desc: isAr
+                      ? 'التطبيق خالٍ تماماً من الإعلانات ومن أي برمجيات تتبع تجارية.'
+                      : 'Приложение полностью свободно от рекламы и любых сторонних маркетинговых модулей.',
+                ),
+                const SizedBox(height: 8),
+                _privacyBullet(
+                  context,
+                  title: isAr ? 'حفظ محلي' : 'Локальное хранение',
+                  desc: isAr
+                      ? 'جميع ملاحظاتك وإشاراتك المرجعية مخزنة في جهازك فقط ويمكنك تصديرها واستيرادها متى شئت.'
+                      : 'Все ваши закладки, заметки и статистика чтения хранятся только в памяти вашего устройства.',
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(s.close),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _privacyBullet(
+    BuildContext context, {
+    required String title,
+    required String desc,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 5),
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: colorScheme.primary,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: colorScheme.onSurface,
+              ),
+              children: [
+                TextSpan(
+                  text: '$title: ',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(
+                  text: desc,
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   ButtonStyle _segmentStyle(ColorScheme colorScheme) {
