@@ -52,7 +52,6 @@ class SettingsSheet extends StatelessWidget {
                   icon: Icons.menu_book_outlined,
                   title: s.textAndReading,
                   subtitle: _textAndReadingSubtitle(context, s),
-                  initiallyExpanded: true,
                   children: [
                     _StepperRow(
                       isAr: isAr,
