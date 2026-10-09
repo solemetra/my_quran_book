@@ -45,9 +45,17 @@ const _seedColor = Color(0xFF0F766E);
 }
 
 ThemeData _buildMyQuranLight() {
-  final colorScheme = ColorScheme.fromSeed(seedColor: _seedColor).copyWith(
+  final base = ColorScheme.fromSeed(seedColor: _seedColor);
+  final colorScheme = base.copyWith(
     surface: const Color(0xFFFAFDFC),
     onSurface: const Color(0xFF0D1211),
+    surfaceContainerLowest: const Color(0xFFFFFFFF),
+    surfaceContainerLow: const Color(0xFFF2F7F5),
+    surfaceContainer: const Color(0xFFEBF2EF),
+    surfaceContainerHigh: const Color(0xFFE4ECE9),
+    surfaceContainerHighest: const Color(0xFFDDE6E3),
+    outline: const Color(0xFF6F7976),
+    outlineVariant: const Color(0xFFBEC9C5),
   );
   return ThemeData(
     useMaterial3: true,
@@ -57,9 +65,20 @@ ThemeData _buildMyQuranLight() {
 }
 
 ThemeData _buildMyQuranDark() {
-  final colorScheme = ColorScheme.fromSeed(
+  final base = ColorScheme.fromSeed(
     seedColor: _seedColor,
     brightness: Brightness.dark,
+  );
+  final colorScheme = base.copyWith(
+    surface: const Color(0xFF0F1514),
+    onSurface: const Color(0xFFDEE4E1),
+    surfaceContainerLowest: const Color(0xFF0A0F0E),
+    surfaceContainerLow: const Color(0xFF171D1C),
+    surfaceContainer: const Color(0xFF1B2221),
+    surfaceContainerHigh: const Color(0xFF252C2B),
+    surfaceContainerHighest: const Color(0xFF303736),
+    outline: const Color(0xFF899390),
+    outlineVariant: const Color(0xFF3F4946),
   );
   return ThemeData(
     useMaterial3: true,

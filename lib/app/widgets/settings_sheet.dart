@@ -9,6 +9,7 @@ import 'package:my_quran/app/services/backup_service.dart';
 import 'package:my_quran/app/services/reading_stats_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
+import 'package:my_quran/app/design_tokens.dart';
 import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
 import 'package:my_quran/quran/quran.dart';
 
@@ -28,20 +29,23 @@ class SettingsSheet extends StatelessWidget {
     final isAr = settingsController.language == 'ar';
 
     return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 16, 12, 20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: context.colorScheme.surfaceContainer,
-        ),
-        child: ListenableBuilder(
-          listenable: Listenable.merge([fontController, settingsController]),
-          builder: (context, _) {
-            final colorScheme = context.colorScheme;
-            return ListView(
-              children: [
-                _ReadingStatsCard(s: s, isAr: isAr),
-                _groupTile(
+      child: AdaptiveContent(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 16, 12, 20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: context.colorScheme.surfaceContainer,
+          ),
+          child: ListenableBuilder(
+            listenable: Listenable.merge([fontController, settingsController]),
+            builder: (context, _) {
+              final colorScheme = context.colorScheme;
+              return ListView(
+                children: [
+                  Md3SpringAppear(
+                    child: _ReadingStatsCard(s: s, isAr: isAr),
+                  ),
+                  _groupTile(
                   context: context,
                   key: const PageStorageKey('settings_group_text_reading'),
                   icon: Icons.menu_book_outlined,
@@ -282,6 +286,7 @@ class SettingsSheet extends StatelessWidget {
             );
           },
         ),
+      ),
       ),
     );
   }

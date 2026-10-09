@@ -7,6 +7,7 @@ import 'package:my_quran/app/l10n.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/search/processor.dart';
 import 'package:my_quran/app/services/search_service.dart';
+import 'package:my_quran/app/design_tokens.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/quran/data/surah_data.dart';
 import 'package:my_quran/quran/quran.dart';
@@ -189,44 +190,55 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
         (hasSectionHeader ? 1 : 0) +
         hits.length;
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.85,
-      child: Column(
-        children: [
-          // --- Search Bar ---
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _controller,
-              autofocus: true,
-              textAlign: isAr ? TextAlign.right : TextAlign.left,
-              textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
-              style: const TextStyle(letterSpacing: 0),
-              decoration: InputDecoration(
-                hintText: s.searchHint,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _controller.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _controller.clear();
-                          _onSearchChanged('');
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+    return AdaptiveContent(
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.85,
+        child: Column(
+          children: [
+            // --- Search Bar (M3 Expressive 28dp stadium style) ---
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: TextField(
+                controller: _controller,
+                autofocus: true,
+                textAlign: isAr ? TextAlign.right : TextAlign.left,
+                textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+                style: const TextStyle(letterSpacing: 0),
+                decoration: InputDecoration(
+                  hintText: s.searchHint,
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _controller.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _controller.clear();
+                            _onSearchChanged('');
+                          },
+                        )
+                      : null,
+                  border: const OutlineInputBorder(
+                    borderRadius: AppShapes.borderExtraLarge,
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: const OutlineInputBorder(
+                    borderRadius: AppShapes.borderExtraLarge,
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: AppShapes.borderExtraLarge,
+                    borderSide: BorderSide(
+                      color: colorScheme.primary,
+                      width: 1.5,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHigh,
                 ),
-                filled: true,
-                fillColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest.applyOpacity(0.3),
+                onChanged: _onSearchChanged,
               ),
-              onChanged: _onSearchChanged,
             ),
-          ),
 
-          _buildFiltersBar(context),
+            _buildFiltersBar(context),
 
           // --- Results List ---
           Expanded(
@@ -317,8 +329,9 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSurahCard(BuildContext context, int surahNum) {
     final colorScheme = Theme.of(context).colorScheme;

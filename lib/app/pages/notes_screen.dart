@@ -4,6 +4,7 @@ import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/notes_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
+import 'package:my_quran/app/design_tokens.dart';
 import 'package:my_quran/app/widgets/edit_note_dialog.dart';
 import 'package:my_quran/quran/quran.dart';
 import 'package:my_quran/app/l10n.dart';
@@ -174,48 +175,101 @@ class _NotesScreenState extends State<NotesScreen> {
 
         body: _loading
             ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: _inputDecoration(
-                        prefixIconData: Icons.search,
-                        hintText: s.searchInNotesHint,
+            : AdaptiveContent(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: _inputDecoration(
+                          prefixIconData: Icons.search,
+                          hintText: s.searchInNotesHint,
+                        ),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: DropdownButtonFormField<int?>(
-                      value: _surahFilter,
-                      decoration: _inputDecoration(labelText: s.filterBySurah),
-                      items: [
-                        DropdownMenuItem<int?>(child: Text(s.allSurahs)),
-                        for (int i = 1; i <= 114; i++)
-                          DropdownMenuItem<int?>(
-                            value: i,
-                            child: Text(
-                              '${s.surahLabel} ${s.isAr ? Quran.instance.getSurahNameArabic(i) : Quran.instance.getSurahName(i)}',
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: DropdownButtonFormField<int?>(
+                        value: _surahFilter,
+                        decoration: _inputDecoration(labelText: s.filterBySurah),
+                        items: [
+                          DropdownMenuItem<int?>(child: Text(s.allSurahs)),
+                          for (int i = 1; i <= 114; i++)
+                            DropdownMenuItem<int?>(
+                              value: i,
+                              child: Text(
+                                '${s.surahLabel} ${s.isAr ? Quran.instance.getSurahNameArabic(i) : Quran.instance.getSurahName(i)}',
+                              ),
                             ),
-                          ),
-                      ],
-                      onChanged: (v) => setState(() => _surahFilter = v),
+                        ],
+                        onChanged: (v) => setState(() => _surahFilter = v),
+                      ),
                     ),
-                  ),
-                  if (_surahFilter != null)
-                    TextButton.icon(
-                      onPressed: () => setState(() {
-                        _surahFilter = null;
-                      }),
-                      icon: const Icon(Icons.filter_list_off_outlined),
-                      label: Text(s.clearFilter),
-                    ),
-                  Expanded(
-                    child: items.isEmpty
-                        ? Center(child: Text(s.noNotes))
-                        : ListView.separated(
+                    if (_surahFilter != null)
+                      TextButton.icon(
+                        onPressed: () => setState(() {
+                          _surahFilter = null;
+                        }),
+                        icon: const Icon(Icons.filter_list_off_outlined),
+                        label: Text(s.clearFilter),
+                      ),
+                    Expanded(
+                      child: items.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Md3SpringAppear(
+                                  child: Container(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 420),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 32,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.surfaceContainerLow,
+                                      borderRadius: AppShapes.borderLarge,
+                                      border: Border.all(
+                                        color: colorScheme.outlineVariant
+                                            .applyOpacity(0.3),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 64,
+                                          height: 64,
+                                          decoration: BoxDecoration(
+                                            color: colorScheme.primaryContainer,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.note_alt_outlined,
+                                            size: 32,
+                                            color: colorScheme.primary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          s.noNotes,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: colorScheme.onSurface,
+                                              ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
                             padding: const EdgeInsets.all(12),
                             itemCount: items.length,
                             separatorBuilder: (_, __) =>
@@ -402,6 +456,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   ),
                 ],
               ),
+            ),
       ),
     );
   }

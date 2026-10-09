@@ -10,6 +10,7 @@ import 'package:my_quran/quran/quran.dart';
 
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
+import 'package:my_quran/app/design_tokens.dart';
 import 'package:my_quran/app/utils.dart';
 
 class BookmarksScreen extends StatefulWidget {
@@ -120,32 +121,34 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
             ),
             body: _loading
                 ? const Center(child: CircularProgressIndicator())
-                : Column(
-                    children: [
-                      // ── Category filter chips ──
-                      _buildCategoryFilter(colorScheme),
+                : AdaptiveContent(
+                    child: Column(
+                      children: [
+                        // ── Category filter chips ──
+                        _buildCategoryFilter(colorScheme),
 
-                      // ── Bookmarks list ──
-                      Expanded(
-                        child: filtered.isEmpty
-                            ? _buildEmptyState()
-                            : ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
+                        // ── Bookmarks list ──
+                        Expanded(
+                          child: filtered.isEmpty
+                              ? _buildEmptyState()
+                              : ListView.separated(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  itemCount: filtered.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    return _buildBookmarkCard(
+                                      context,
+                                      filtered[index],
+                                    );
+                                  },
                                 ),
-                                itemCount: filtered.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 8),
-                                itemBuilder: (context, index) {
-                                  return _buildBookmarkCard(
-                                    context,
-                                    filtered[index],
-                                  );
-                                },
-                              ),
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
           );
         },
@@ -221,42 +224,67 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     final isFiltered = _selectedCategoryId != null;
     return Builder(
       builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
         return Center(
           child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isFiltered ? Icons.filter_list_off : Icons.bookmark_border,
-                  size: 64,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurfaceVariant.applyOpacity(0.4),
+            padding: const EdgeInsets.all(24),
+            child: Md3SpringAppear(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 420),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  isFiltered
-                      ? s.noBookmarksInCategory
-                      : s.noBookmarksYet,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerLow,
+                  borderRadius: AppShapes.borderLarge,
+                  border: Border.all(
+                    color: colorScheme.outlineVariant.applyOpacity(0.3),
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  isFiltered
-                      ? s.tryAnotherCategory
-                      : s.addBookmarkHint,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant.applyOpacity(0.7),
-                  ),
-                  textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isFiltered
+                            ? Icons.filter_list_off_rounded
+                            : Icons.bookmark_border_rounded,
+                        size: 32,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      isFiltered
+                          ? s.noBookmarksInCategory
+                          : s.noBookmarksYet,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isFiltered
+                          ? s.tryAnotherCategory
+                          : s.addBookmarkHint,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );

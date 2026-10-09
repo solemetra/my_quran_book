@@ -10,6 +10,7 @@ import 'package:my_quran/quran/quran.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/services/notes_service.dart';
+import 'package:my_quran/app/design_tokens.dart';
 import 'package:my_quran/app/utils.dart';
 
 class VerseMenuDialog extends StatefulWidget {
@@ -102,26 +103,38 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     final mq = MediaQuery.of(context);
     final isLandscape = mq.orientation == Orientation.landscape;
 
+    final isTablet = mq.size.shortestSide >= 600;
+    final dialogMaxWidth = isLandscape
+        ? (isTablet ? 640.0 : 560.0)
+        : (isTablet ? 520.0 : 360.0);
+    final dialogMaxHeight = isLandscape
+        ? mq.size.height * 0.9
+        : (isTablet ? mq.size.height * 0.72 : mq.size.height * 0.6);
+
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: ScaffoldMessenger(
         child: Builder(
           builder: (context) {
-            return ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: isLandscape ? 560 : 340,
-                maxHeight: mq.size.height * (isLandscape ? 0.9 : 0.6),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Scaffold(
-                  backgroundColor: colorScheme.surface,
-                  bottomNavigationBar: isLandscape
-                      ? null
-                      : _buildBottomActionsBar(context),
-                  body: isLandscape
-                      ? _buildLandscapeBody(context)
-                      : _buildPortraitBody(context),
+            return Center(
+              child: Md3SpringAppear(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: dialogMaxWidth,
+                    maxHeight: dialogMaxHeight,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: AppShapes.borderLarge,
+                    child: Scaffold(
+                      backgroundColor: colorScheme.surface,
+                      bottomNavigationBar: isLandscape
+                          ? null
+                          : _buildBottomActionsBar(context),
+                      body: isLandscape
+                          ? _buildLandscapeBody(context)
+                          : _buildPortraitBody(context),
+                    ),
+                  ),
                 ),
               ),
             );
