@@ -760,14 +760,14 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعة';
       if (diff.inDays < 7) return 'منذ ${diff.inDays} يوم';
       if (diff.inDays < 30) return 'منذ ${(diff.inDays / 7).floor()} أسبوع';
+      return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
     } else {
-      if (diff.inMinutes < 1) return 'Just now';
-      if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-      if (diff.inHours < 24) return '${diff.inHours}h ago';
-      if (diff.inDays < 7) return '${diff.inDays}d ago';
-      if (diff.inDays < 30) return '${(diff.inDays / 7).floor()}w ago';
+      if (diff.inMinutes < 1) return 'Только что';
+      if (diff.inMinutes < 60) return '${diff.inMinutes} мин. назад';
+      if (diff.inHours < 24) return '${diff.inHours} ч. назад';
+      if (diff.inDays < 7) return '${diff.inDays} дн. назад';
+      if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} нед. назад';
+      return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
     }
-
-    return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
   }
 }
