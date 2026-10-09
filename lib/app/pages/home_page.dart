@@ -465,7 +465,19 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       Navigator.push(
                         context,
                         MaterialPageRoute<void>(
-                          builder: (_) => const NotesScreen(),
+                          builder: (_) => NotesScreen(
+                            settingsController: widget.settingsController,
+                            onNavigateToPage:
+                                ({
+                                  required page,
+                                  required surah,
+                                  required verse,
+                                }) => _jumpToPage(
+                                  page,
+                                  highlightSurah: surah,
+                                  highlightVerse: verse,
+                                ),
+                          ),
                         ),
                       );
                     },
@@ -1148,15 +1160,19 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
     final colorScheme = theme.colorScheme;
     final isWarsh = widget.settingsController.fontFamily == FontFamily.warsh;
 
-    final highlightBg = context.isDarkMode
-        ? colorScheme.surfaceContainerHigh
-        : colorScheme.surfaceContainerHighest;
+    final highlightColor = context.isDarkMode
+        ? colorScheme.primary.applyOpacity(0.25)
+        : colorScheme.primary.applyOpacity(0.12);
+
+    final highlightPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 10.0
+      ..color = highlightColor;
+
     final highlightStyle = TextStyle(
-      background: Paint()
-        ..style = PaintingStyle.fill
-        ..strokeJoin = StrokeJoin.round
-        ..strokeWidth = 24.0
-        ..color = highlightBg,
+      background: highlightPaint,
     );
 
     final symbolFontFamily = isWarsh
@@ -1216,7 +1232,12 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
 
       // 2. Spacer
       if (isWarsh) {
-        children.add(const TextSpan(text: ' '));
+        children.add(
+          TextSpan(
+            text: ' ',
+            style: isSelected ? highlightStyle : null,
+          ),
+        );
       }
 
       // 3. Symbol with indicator styling
@@ -1232,6 +1253,10 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
             decoration: indicator.hasNote ? TextDecoration.underline : null,
           );
         }
+      }
+
+      if (isSelected) {
+        symbolStyle = symbolStyle.copyWith(background: highlightPaint);
       }
 
       children.add(TextSpan(text: displaySymbol.trim(), style: symbolStyle));

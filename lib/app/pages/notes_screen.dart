@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/notes_service.dart';
+import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/widgets/edit_note_dialog.dart';
 import 'package:my_quran/quran/quran.dart';
@@ -10,7 +11,18 @@ import 'package:my_quran/app/l10n.dart';
 enum NotesSort { updatedDesc, updatedAsc, createdDesc, createdAsc }
 
 class NotesScreen extends StatefulWidget {
-  const NotesScreen({super.key});
+  const NotesScreen({
+    this.settingsController,
+    this.onNavigateToPage,
+    super.key,
+  });
+
+  final SettingsController? settingsController;
+  final void Function({
+    required int page,
+    required int surah,
+    required int verse,
+  })? onNavigateToPage;
 
   @override
   State<NotesScreen> createState() => _NotesScreenState();
@@ -137,6 +149,7 @@ class _NotesScreenState extends State<NotesScreen> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
     final items = _filtered;
 
     return Directionality(
@@ -213,21 +226,175 @@ class _NotesScreenState extends State<NotesScreen> {
                                   ? Quran.instance.getSurahNameArabic(n.surah)
                                   : Quran.instance.getSurahName(n.surah);
 
-                              final verseNum = s.isAr ? getArabicNumber(n.verse) : n.verse.toString();
+                              final verseNum = s.isAr
+                                  ? getArabicNumber(n.verse)
+                                  : n.verse.toString();
+                              final pageNumber =
+                                  Quran.instance.getPageNumber(n.surah, n.verse);
+                              final pageNum = s.isAr
+                                  ? getArabicNumber(pageNumber)
+                                  : pageNumber.toString();
+                              final verseText =
+                                  Quran.instance.getVerse(n.surah, n.verse);
+                              final previewVerse = verseText.length > 100
+                                  ? '${verseText.substring(0, 100)}...'
+                                  : verseText;
+                              final fontFamilyName = widget
+                                      .settingsController?.fontFamily.name ??
+                                  FontFamily.hafs.name;
+
                               return Card(
                                 elevation: 0,
-                                child: ListTile(
-                                  title: Text(
-                                    n.text,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: colorScheme.outlineVariant
+                                        .applyOpacity(0.4),
                                   ),
-                                  subtitle: Text(
-                                    '${s.surahLabel} $surahName • '
-                                    '${s.verse} $verseNum',
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
+                                    if (widget.onNavigateToPage != null) {
+                                      Navigator.pop(context);
+                                      widget.onNavigateToPage!(
+                                        page: pageNumber,
+                                        surah: n.surah,
+                                        verse: n.verse,
+                                      );
+                                    } else {
+                                      _edit(n);
+                                    }
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(14),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Header: Surah & Verse info + edit button
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '${s.surahLabel} $surahName',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleSmall
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: colorScheme
+                                                              .onSurfaceVariant,
+                                                        ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    '${s.verse} $verseNum  •  ${s.page} $pageNum',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.copyWith(
+                                                          color: colorScheme
+                                                              .onSurfaceVariant,
+                                                          fontFamily: s.isAr
+                                                              ? FontFamily
+                                                                  .arabicNumbersFontFamily
+                                                                  .name
+                                                              : null,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.edit_outlined,
+                                                size: 20,
+                                              ),
+                                              color: colorScheme
+                                                  .onSurfaceVariant,
+                                              onPressed: () => _edit(n),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+
+                                        // Verse preview quote box
+                                        Container(
+                                          width: double.infinity,
+                                          margin: const EdgeInsets.symmetric(
+                                            vertical: 4,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: colorScheme.primary
+                                                .applyOpacity(0.06),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            border: Border(
+                                              right: s.isAr
+                                                  ? BorderSide(
+                                                      color: colorScheme.primary,
+                                                      width: 3.5,
+                                                    )
+                                                  : BorderSide.none,
+                                              left: !s.isAr
+                                                  ? BorderSide(
+                                                      color: colorScheme.primary,
+                                                      width: 3.5,
+                                                    )
+                                                  : BorderSide.none,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            previewVerse,
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              height: 1.85,
+                                              color: colorScheme.onSurface,
+                                              fontFamily: fontFamilyName,
+                                            ),
+                                            textAlign: TextAlign.right,
+                                            textDirection: TextDirection.rtl,
+                                          ),
+                                        ),
+
+                                        // User note text
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Icon(
+                                              Icons.sticky_note_2_outlined,
+                                              size: 18,
+                                              color: colorScheme.primary,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                n.text,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      height: 1.45,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  trailing: const Icon(Icons.chevron_right),
-                                  onTap: () => _edit(n),
                                 ),
                               );
                             },

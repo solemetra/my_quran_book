@@ -1,6 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <supports-screens
+        android:smallScreens="true"
+        android:normalScreens="true"
+        android:largeScreens="true"
+        android:xlargeScreens="true"
+        android:anyDensity="true" />
+
     <application
-        android:label="Коран"
+        android:label="Коран HD"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

@@ -434,20 +434,40 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 // ── Verse preview ──
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: context.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
+                    color: (category?.color ?? colorScheme.primary)
+                        .applyOpacity(0.06),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border(
+                      right: isAr
+                          ? BorderSide(
+                              color: category?.color ?? colorScheme.primary,
+                              width: 3.5,
+                            )
+                          : BorderSide.none,
+                      left: !isAr
+                          ? BorderSide(
+                              color: category?.color ?? colorScheme.primary,
+                              width: 3.5,
+                            )
+                          : BorderSide.none,
+                    ),
                   ),
                   child: Text(
                     previewText,
                     style: TextStyle(
-                      fontSize: 16,
-                      height: 1.8,
-                      color: context.colorScheme.onSurface,
+                      fontSize: 18,
+                      height: 1.85,
+                      color: colorScheme.onSurface,
                       fontFamily: widget.settingsController.fontFamily.name,
                     ),
-                    textAlign: TextAlign.center,
+                    textAlign: TextAlign.right,
+                    textDirection: TextDirection.rtl,
                   ),
                 ),
 
