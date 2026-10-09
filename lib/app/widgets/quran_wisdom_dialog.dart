@@ -208,8 +208,6 @@ class _QuranWisdomEasterEggDialogState
     final subtitle =
         isAr ? 'من أقوال الصحابة الكرام' : 'Жемчужины мудрости сподвижников';
     final closeBtnLabel = isAr ? 'إغلاق' : 'Закрыть';
-    final tapToSkipHint =
-        isAr ? 'المس لتخطي الرسوم' : 'Нажмите, чтобы показать весь текст';
 
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
@@ -447,22 +445,7 @@ class _QuranWisdomEasterEggDialogState
                         ],
                       ),
                     ),
-                    const SizedBox(height: 14),
-
-                    // Tap to skip hint
-                    if (!_isFinished)
-                      Center(
-                        child: Text(
-                          tapToSkipHint,
-                          style: textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant.withOpacity(
-                              0.65,
-                            ),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 18),
 
                     // Bottom close button
                     Center(
