@@ -77,8 +77,22 @@ class S {
   String get importSuccess => 'Импорт успешно завершён';
   String get importError => 'Ошибка импорта';
   String get success => 'Успешно';
-  String get error => 'Ошибка';
   String get save => 'Сохранить';
+
+  // Статистика чтения
+  String get readingStats => isAr ? 'إحصائيات القراءة' : 'Статистика чтения';
+  String get readingTimeToday => isAr ? 'الوقت اليوم' : 'Время сегодня';
+  String get readingStreak => isAr ? 'أيام متتالية' : 'Дней подряд';
+  String get khatmProgress => isAr ? 'ختمة القرآن' : 'Прогресс Хатма';
+  String get todayPages => isAr ? 'صفحات اليوم' : 'Страниц сегодня';
+  String get pagesUnit => 'стр.';
+  String get minutesShort => isAr ? 'د' : 'мин';
+  String get hoursShort => isAr ? 'س' : 'ч';
+  String get daysShort => isAr ? 'يوم' : 'дн.';
+  String get resetKhatm => isAr ? 'بدء ختمة جديدة' : 'Начать новый Хатм';
+  String get resetKhatmConfirm => isAr
+      ? 'هل تريد إعادة تعيين تقدم الختمة الحالية والبدء من جديد؟'
+      : 'Сбросить прогресс текущего прочтения Корана и начать новый Хатм?';
 
   // Поиск
   String get searchHint => 'Поиск по аятам...';

@@ -6,9 +6,11 @@ import 'package:my_quran/app/font_size_controller.dart';
 import 'package:my_quran/app/l10n.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/backup_service.dart';
+import 'package:my_quran/app/services/reading_stats_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
+import 'package:my_quran/quran/quran.dart';
 
 class SettingsSheet extends StatelessWidget {
   const SettingsSheet({
@@ -38,6 +40,7 @@ class SettingsSheet extends StatelessWidget {
             final colorScheme = context.colorScheme;
             return ListView(
               children: [
+                _ReadingStatsCard(s: s, isAr: isAr),
                 _groupTile(
                   context: context,
                   key: const PageStorageKey('settings_group_text_reading'),
@@ -655,3 +658,249 @@ class _ToggleRow extends StatelessWidget {
     );
   }
 }
+
+class _ReadingStatsCard extends StatelessWidget {
+  const _ReadingStatsCard({
+    required this.s,
+    required this.isAr,
+  });
+
+  final S s;
+  final bool isAr;
+
+  String _formatTime(int minutes) {
+    if (minutes < 60) {
+      return '$minutes ${s.minutesShort}';
+    }
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
+    if (mins == 0) {
+      return '$hours ${s.hoursShort}';
+    }
+    return '$hours ${s.hoursShort} $mins ${s.minutesShort}';
+  }
+
+  void _showResetKhatmDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+        child: AlertDialog(
+          title: Text(s.resetKhatm),
+          content: Text(s.resetKhatmConfirm),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(s.cancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                ReadingStatsService.instance.resetKhatm();
+                Navigator.pop(ctx);
+              },
+              child: Text(s.resetKhatm),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final stats = ReadingStatsService.instance;
+
+    return ListenableBuilder(
+      listenable: stats,
+      builder: (context, _) {
+        final streakText = stats.currentStreak > 0
+            ? '${stats.currentStreak} ${s.daysShort}'
+            : '0 ${s.daysShort}';
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: colorScheme.outlineVariant.applyOpacity(0.4),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Icon(
+                    Icons.auto_stories_outlined,
+                    size: 20,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    s.readingStats,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (stats.khatmPagesCount > 0)
+                    InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => _showResetKhatmDialog(context),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        child: Text(
+                          s.resetKhatm,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // 3 Metric Cards Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetricTile(
+                      icon: Icons.access_time_rounded,
+                      iconColor: colorScheme.primary,
+                      value: _formatTime(stats.todayMinutes),
+                      label: s.readingTimeToday,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _MetricTile(
+                      icon: Icons.local_fire_department_rounded,
+                      iconColor: Colors.deepOrangeAccent,
+                      value: streakText,
+                      label: s.readingStreak,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _MetricTile(
+                      icon: Icons.menu_book_outlined,
+                      iconColor: colorScheme.tertiary,
+                      value: '${stats.todayPagesCount} ${s.pagesUnit}',
+                      label: s.todayPages,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Khatm Progress Bar
+              Row(
+                children: [
+                  Text(
+                    s.khatmProgress,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${stats.khatmPagesCount} / ${Quran.totalPagesCount} ${s.pagesUnit} (${stats.khatmPercentage}%)',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: stats.khatmProgress,
+                  minHeight: 6,
+                  backgroundColor:
+                      colorScheme.surfaceContainerHighest.applyOpacity(0.5),
+                  valueColor: AlwaysStoppedAnimation(colorScheme.primary),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontSize: 11,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

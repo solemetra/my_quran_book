@@ -20,6 +20,7 @@ import 'package:my_quran/app/quran_page_text_cache.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/font_size_controller.dart';
 import 'package:my_quran/app/services/reading_position_service.dart';
+import 'package:my_quran/app/services/reading_stats_service.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/widgets/navigation_sheet.dart';
@@ -68,6 +69,9 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late bool _isHorizontalScrolling =
       widget.settingsController.isHorizontalScrolling;
 
+  Timer? _readingStatsTimer;
+  DateTime _lastInteractionTime = DateTime.now();
+
   @override
   void initState() {
     super.initState();
@@ -98,6 +102,21 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     widget.settingsController.addListener(_onScrollingModeChanged);
 
     _fontSizeController.addListener(() => setState(() {}));
+
+    ReadingStatsService.instance.init();
+    ReadingStatsService.instance.recordPageRead(
+      widget.initialPosition?.pageNumber ?? 1,
+    );
+    _readingStatsTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (!mounted) return;
+      final isAppActive =
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+      final isRecentInteraction =
+          DateTime.now().difference(_lastInteractionTime).inMinutes < 3;
+      if (isAppActive && isRecentInteraction) {
+        ReadingStatsService.instance.addReadingTime(15);
+      }
+    });
   }
 
   late final ValueNotifier<int> bookmarkRevision = ValueNotifier(0);
@@ -198,6 +217,8 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         hizbQuarter: Quran.instance.getHizbQuarter(surahNum, verseNum),
       );
     }
+    ReadingStatsService.instance.recordPageRead(pageNumber);
+    _lastInteractionTime = DateTime.now();
   }
 
   Future<void> _jumpToPage(
@@ -328,6 +349,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _readingStatsTimer?.cancel();
     // Restore system UI when leaving the screen
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _highlightedVerseNotifier.dispose();
