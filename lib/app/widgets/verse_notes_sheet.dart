@@ -78,6 +78,36 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
     await widget.onChanged();
   }
 
+  Future<void> _deleteNote(VerseNote note) async {
+    final s = S.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.deleteNote),
+        content: Text(s.deleteNoteConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(s.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _notesService.removeNoteById(note.id);
+      await _load();
+      await widget.onChanged();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -147,9 +177,24 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
                           ),
                           style: Theme.of(context).textTheme.labelSmall,
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _editNote(n),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 20),
+                              tooltip: s.edit,
+                              onPressed: () => _editNote(n),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete_outline_rounded,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              tooltip: s.delete,
+                              onPressed: () => _deleteNote(n),
+                            ),
+                          ],
                         ),
                         onTap: () => _editNote(n),
                       );

@@ -137,6 +137,10 @@ class S {
       'Заметки • Сура $surahName • Аят $verse';
   String get note => 'Заметка';
   String get writeNoteHint => 'Напишите заметку...';
+  String get deleteNote => isAr ? 'حذف الملاحظة' : (isEn ? 'Delete Note' : 'Удалить заметку');
+  String get deleteNoteConfirm => isAr
+      ? 'هل أنت متأكد من حذف هذه الملاحظة؟'
+      : (isEn ? 'Are you sure you want to delete this note?' : 'Удалить эту заметку?');
   String get add => 'Добавить';
   String get view => 'Просмотр';
   String get copiedToClipboard => 'Скопировано в буфер обмена';

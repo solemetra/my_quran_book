@@ -121,6 +121,35 @@ class _NotesScreenState extends State<NotesScreen> {
     await _load();
   }
 
+  Future<void> _delete(VerseNote note) async {
+    final s = S.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.deleteNote),
+        content: Text(s.deleteNoteConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(s.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _notesService.removeNoteById(note.id);
+      await _load();
+    }
+  }
+
   void _navigateToNote(VerseNote note) {
     final pageNumber = Quran.instance.getPageNumber(note.surah, note.verse);
     if (widget.onNavigateToPage != null) {
@@ -386,8 +415,18 @@ class _NotesScreenState extends State<NotesScreen> {
                           Icons.edit_outlined,
                           size: 20,
                         ),
+                        tooltip: s.edit,
                         color: colorScheme.onSurfaceVariant,
                         onPressed: () => _edit(n),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.delete_outline_rounded,
+                          size: 20,
+                          color: colorScheme.error,
+                        ),
+                        tooltip: s.delete,
+                        onPressed: () => _delete(n),
                       ),
                     ],
                   ),
