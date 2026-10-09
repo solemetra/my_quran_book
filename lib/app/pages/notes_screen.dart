@@ -681,22 +681,21 @@ class _NotesScreenState extends State<NotesScreen> {
               const SizedBox(height: 20),
 
               // Actions
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => _navigateToNote(note),
-                      icon: const Icon(Icons.auto_stories_rounded, size: 20),
-                      label: Text(s.goToVerse),
-                    ),
+                  FilledButton.icon(
+                    onPressed: () => _navigateToNote(note),
+                    icon: const Icon(Icons.auto_stories_rounded, size: 20),
+                    label: Text(s.goToVerse),
                   ),
-                  const SizedBox(width: 8),
                   OutlinedButton.icon(
                     onPressed: () => _edit(note),
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     label: Text(s.edit),
                   ),
-                  const SizedBox(width: 8),
                   IconButton.outlined(
                     onPressed: () => _delete(note),
                     icon: Icon(Icons.delete_outline, color: colorScheme.error, size: 20),

@@ -745,22 +745,25 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               const SizedBox(height: 20),
 
               // Action buttons
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => _onBookmarkTap(bookmark),
-                      icon: const Icon(Icons.auto_stories_rounded, size: 20),
-                      label: Text(s.goToVerse),
-                    ),
+                  FilledButton.icon(
+                    onPressed: () => _onBookmarkTap(bookmark),
+                    icon: const Icon(Icons.auto_stories_rounded, size: 20),
+                    label: Text(s.goToVerse),
                   ),
-                  const SizedBox(width: 8),
                   OutlinedButton.icon(
                     onPressed: () => _openNotesForVerse(bookmark.surah, bookmark.verse),
                     icon: const Icon(Icons.note_alt_outlined, size: 18),
-                    label: Text(verseNotes.isNotEmpty ? '${s.notes} (${verseNotes.length})' : s.addNote),
+                    label: Text(
+                      verseNotes.isNotEmpty
+                          ? '${s.notes} (${verseNotes.length})'
+                          : s.addNote,
+                    ),
                   ),
-                  const SizedBox(width: 8),
                   IconButton.outlined(
                     tooltip: s.changeCategory,
                     onPressed: () => _changeCategory(bookmark),
@@ -769,7 +772,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                   IconButton.outlined(
                     tooltip: s.delete,
                     onPressed: () => _deleteBookmark(bookmark),
-                    icon: Icon(Icons.delete_outline, size: 20, color: colorScheme.error),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      size: 20,
+                      color: colorScheme.error,
+                    ),
                   ),
                 ],
               ),
