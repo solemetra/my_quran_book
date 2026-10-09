@@ -53,7 +53,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
   bool _notesLoading = true;
   List<VerseNote> _verseNotes = const [];
 
-  bool get _hasNotes => _verseNotes.isNotEmpty;
+  bool get _hasNotes => !_notesLoading && _verseNotes.isNotEmpty;
 
   S get s => S(widget.language);
   bool get isAr => widget.language == 'ar';
@@ -113,40 +113,41 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Dialog(
         alignment: Alignment.bottomCenter,
-        insetPadding: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
+        insetPadding: const EdgeInsets.only(bottom: 28, left: 16, right: 16),
         backgroundColor: Colors.transparent,
         elevation: 0,
         child: Md3SpringAppear(
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 460),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            constraints: const BoxConstraints(maxWidth: 720),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(32),
               border: Border.all(
                 color: colorScheme.outlineVariant.withOpacity(0.5),
-                width: 1,
+                width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.16),
-                  blurRadius: 18,
-                  offset: const Offset(0, 6),
+                  color: Colors.black.withOpacity(0.18),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 1. Verse indicator badge
-                Flexible(
-                  child: Container(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 1. Verse indicator badge
+                  Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: 14,
+                      vertical: 9,
                     ),
                     decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer.withOpacity(0.7),
+                      color: colorScheme.primaryContainer.withOpacity(0.85),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -154,107 +155,97 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                       children: [
                         Icon(
                           Icons.menu_book_rounded,
-                          size: 16,
+                          size: 18,
                           color: colorScheme.onPrimaryContainer,
                         ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            '$surahName • $verseNum',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: textTheme.labelMedium?.copyWith(
-                              color: colorScheme.onPrimaryContainer,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: isAr
-                                  ? FontFamily.arabicNumbersFontFamily.name
-                                  : null,
-                            ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$surahName • $verseNum',
+                          style: textTheme.labelLarge?.copyWith(
+                            color: colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: isAr
+                                ? FontFamily.arabicNumbersFontFamily.name
+                                : null,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: colorScheme.outlineVariant.withOpacity(0.6),
-                ),
-                const SizedBox(width: 4),
-
-                // 2. Action: Copy
-                IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 20),
-                  tooltip: s.copyVerse,
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => _copyVerse(context),
-                ),
-
-                // 3. Action: Bookmark
-                Tooltip(
-                  message: isBookmarked ? s.editBookmark : s.addBookmark,
-                  child: Material(
-                    color: Colors.transparent,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () => _toggleBookmark(context),
-                      onLongPress: () => _openBookmarkPicker(context),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Icon(
-                          isBookmarked
-                              ? Icons.bookmark_rounded
-                              : Icons.bookmark_border_rounded,
-                          size: 22,
-                          color: bookmarkColor,
-                        ),
-                      ),
-                    ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 1.2,
+                    height: 26,
+                    color: colorScheme.outlineVariant.withOpacity(0.6),
                   ),
-                ),
+                  const SizedBox(width: 8),
 
-                // 4. Action: Notes
-                Tooltip(
-                  message: s.notes,
-                  child: Material(
-                    color: Colors.transparent,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () => _openNotes(context),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Badge(
-                          isLabelVisible: !_notesLoading && _hasNotes,
-                          label: Text('${_verseNotes.length}'),
-                          backgroundColor: colorScheme.primary,
-                          textColor: colorScheme.onPrimary,
-                          child: Icon(
-                            _hasNotes
-                                ? Icons.sticky_note_2_rounded
-                                : Icons.edit_note_rounded,
-                            size: 22,
-                            color: _hasNotes
-                                ? colorScheme.primary
-                                : colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
+                  // 2. Action: Copy
+                  _SpringPillButton(
+                    icon: Icon(
+                      Icons.copy_rounded,
+                      size: 18,
+                      color: colorScheme.onSurface,
                     ),
+                    label: s.copy,
+                    onTap: () => _copyVerse(context),
                   ),
-                ),
+                  const SizedBox(width: 6),
 
-                // 5. Action: Close
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 18),
-                  tooltip: s.close,
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
+                  // 3. Action: Bookmark
+                  _SpringPillButton(
+                    icon: Icon(
+                      isBookmarked
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      size: 19,
+                      color: isBookmarked ? bookmarkColor : colorScheme.onSurface,
+                    ),
+                    label: s.bookmark,
+                    backgroundColor: isBookmarked
+                        ? bookmarkColor.withOpacity(0.16)
+                        : null,
+                    foregroundColor: isBookmarked ? bookmarkColor : null,
+                    onTap: () => _toggleBookmark(context),
+                    onLongPress: () => _openBookmarkPicker(context),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // 4. Action: Notes
+                  _SpringPillButton(
+                    icon: Icon(
+                      _hasNotes
+                          ? Icons.sticky_note_2_rounded
+                          : Icons.edit_note_rounded,
+                      size: _hasNotes ? 19 : 21,
+                      color: _hasNotes
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
+                    ),
+                    label: s.note,
+                    backgroundColor: _hasNotes
+                        ? colorScheme.primaryContainer.withOpacity(0.4)
+                        : null,
+                    foregroundColor: _hasNotes ? colorScheme.primary : null,
+                    badgeCount: _hasNotes ? _verseNotes.length : null,
+                    onTap: () => _openNotes(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 1.2,
+                    height: 26,
+                    color: colorScheme.outlineVariant.withOpacity(0.6),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // 5. Action: Close
+                  _SpringIconButton(
+                    icon: Icons.close_rounded,
+                    tooltip: s.close,
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -480,5 +471,186 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     if (mounted) {
       await _loadNotes();
     }
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// MD3 Spring Pill Button (Icon + Label with spring feedback)
+// ─────────────────────────────────────────────────────────
+
+class _SpringPillButton extends StatefulWidget {
+  const _SpringPillButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.onLongPress,
+    this.backgroundColor,
+    this.foregroundColor,
+    this.badgeCount,
+  });
+
+  final Widget icon;
+  final String label;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+  final int? badgeCount;
+
+  @override
+  State<_SpringPillButton> createState() => _SpringPillButtonState();
+}
+
+class _SpringPillButtonState extends State<_SpringPillButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+      reverseDuration: const Duration(milliseconds: 180),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.93).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails _) => _controller.forward();
+  void _onTapUp(TapUpDetails _) => _controller.reverse();
+  void _onTapCancel() => _controller.reverse();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bg = widget.backgroundColor ?? colorScheme.surfaceContainerLow;
+    final fg = widget.foregroundColor ?? colorScheme.onSurface;
+
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTapDown: _onTapDown,
+          onTapUp: _onTapUp,
+          onTapCancel: _onTapCancel,
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.badgeCount != null && widget.badgeCount! > 0)
+                  Badge.count(
+                    count: widget.badgeCount!,
+                    backgroundColor: colorScheme.primary,
+                    textColor: colorScheme.onPrimary,
+                    child: widget.icon,
+                  )
+                else
+                  widget.icon,
+                const SizedBox(width: 8),
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: fg,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// MD3 Spring Icon Button (Circular close with spring feedback)
+// ─────────────────────────────────────────────────────────
+
+class _SpringIconButton extends StatefulWidget {
+  const _SpringIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  State<_SpringIconButton> createState() => _SpringIconButtonState();
+}
+
+class _SpringIconButtonState extends State<_SpringIconButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+      reverseDuration: const Duration(milliseconds: 180),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.88).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Tooltip(
+        message: widget.tooltip,
+        child: Material(
+          color: colorScheme.surfaceContainerLow,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTapDown: (_) => _controller.forward(),
+            onTapUp: (_) => _controller.reverse(),
+            onTapCancel: () => _controller.reverse(),
+            onTap: widget.onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(9),
+              child: Icon(
+                widget.icon,
+                size: 18,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
