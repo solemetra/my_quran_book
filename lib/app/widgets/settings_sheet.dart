@@ -737,15 +737,15 @@ class _ReadingStatsCard extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.auto_stories_outlined,
-                    size: 20,
+                    size: 22,
                     color: colorScheme.primary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Text(
                     s.readingStats,
-                    style: theme.textTheme.titleSmall?.copyWith(
+                    style: const TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
                     ),
                   ),
                   const Spacer(),
@@ -755,22 +755,22 @@ class _ReadingStatsCard extends StatelessWidget {
                       onTap: () => _showResetKhatmDialog(context),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         child: Text(
                           s.resetKhatm,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             color: colorScheme.primary,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               // 3 Metric Cards Row
               Row(
@@ -783,7 +783,7 @@ class _ReadingStatsCard extends StatelessWidget {
                       label: s.readingTimeToday,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: _MetricTile(
                       icon: Icons.local_fire_department_rounded,
@@ -792,7 +792,7 @@ class _ReadingStatsCard extends StatelessWidget {
                       label: s.readingStreak,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: _MetricTile(
                       icon: Icons.menu_book_outlined,
@@ -803,33 +803,35 @@ class _ReadingStatsCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               // Khatm Progress Bar
               Row(
                 children: [
                   Text(
                     s.khatmProgress,
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    style: TextStyle(
+                      fontSize: 14,
                       color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const Spacer(),
                   Text(
                     '${stats.khatmPagesCount} / ${Quran.totalPagesCount} ${s.pagesUnit} (${stats.khatmPercentage}%)',
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    style: TextStyle(
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: colorScheme.primary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
                   value: stats.khatmProgress,
-                  minHeight: 6,
+                  minHeight: 8,
                   backgroundColor:
                       colorScheme.surfaceContainerHighest.applyOpacity(0.5),
                   valueColor: AlwaysStoppedAnimation(colorScheme.primary),
@@ -862,7 +864,7 @@ class _MetricTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
@@ -872,29 +874,29 @@ class _MetricTile extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: iconColor),
-              const SizedBox(width: 4),
+              Icon(icon, size: 20, color: iconColor),
+              const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  style: const TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    fontSize: 13,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontSize: 11,
+            style: TextStyle(
+              fontSize: 13,
               color: colorScheme.onSurfaceVariant,
             ),
           ),
