@@ -17,8 +17,12 @@ class PinnedHeader extends StatelessWidget {
   });
 
   final ValueNotifier<ReadingPosition> currentPositionNotifier;
-  final void Function(int page, {int? highlightSurah, int? highlightVerse})
-  goToPage;
+  final void Function(
+    int page, {
+    int? highlightSurah,
+    int? highlightVerse,
+    bool autoClearHighlight,
+  }) goToPage;
   final BoxDecoration decoration;
   final SettingsController settingsController;
 
@@ -120,6 +124,8 @@ class PinnedHeader extends StatelessWidget {
                       const SizedBox(width: 4),
                       _SilkRibbonHeaderButton(
                         currentPage: position.pageNumber,
+                        currentSurah: position.surahNumber,
+                        currentVerse: position.verseNumber,
                         goToPage: goToPage,
                         isAr: s.isAr,
                       ),
@@ -428,13 +434,21 @@ class _SearchSurahDialogState extends State<_SearchSurahDialog> {
 class _SilkRibbonHeaderButton extends StatelessWidget {
   const _SilkRibbonHeaderButton({
     required this.currentPage,
+    required this.currentSurah,
+    required this.currentVerse,
     required this.goToPage,
     required this.isAr,
   });
 
   final int currentPage;
-  final void Function(int page, {int? highlightSurah, int? highlightVerse})
-  goToPage;
+  final int currentSurah;
+  final int currentVerse;
+  final void Function(
+    int page, {
+    int? highlightSurah,
+    int? highlightVerse,
+    bool autoClearHighlight,
+  }) goToPage;
   final bool isAr;
 
   @override
@@ -444,11 +458,14 @@ class _SilkRibbonHeaderButton extends StatelessWidget {
     final ribbonService = RibbonBookmarkService();
 
     return ListenableBuilder(
-      listenable: ribbonService.ribbonPageNotifier,
+      listenable: ribbonService.ribbonNotifier,
       builder: (context, _) {
-        final ribbonPage = ribbonService.currentRibbonPage;
-        final isOnThisPage = ribbonPage == currentPage;
-        final hasRibbonElsewhere = ribbonPage != null && !isOnThisPage;
+        final pos = ribbonService.currentPosition;
+        final isOnThisPage = pos?.pageNumber == currentPage;
+        final isOnThisVerse = isOnThisPage &&
+            pos?.surahNumber == currentSurah &&
+            pos?.verseNumber == currentVerse;
+        final hasRibbonElsewhere = pos != null && !isOnThisPage;
 
         final iconColor = isOnThisPage
             ? colorScheme.primary
@@ -462,17 +479,37 @@ class _SilkRibbonHeaderButton extends StatelessWidget {
                 ? Icons.bookmark_outlined
                 : Icons.bookmark_border_rounded);
 
-        final tooltip = isOnThisPage
+        final String ribbonSurahName = pos != null
             ? (isAr
-                ? 'شريط القراءة هنا (صفحة $currentPage) • انقر للإزالة'
-                : 'Шёлковая лента здесь (стр. $currentPage) • Нажмите, чтобы снять')
-            : (hasRibbonElsewhere
+                ? Quran.instance.getSurahNameArabic(pos.surahNumber)
+                : Quran.instance.getSurahName(pos.surahNumber))
+            : '';
+        final String ribbonVerseNum = pos != null
+            ? (isAr
+                ? getArabicNumber(pos.verseNumber)
+                : pos.verseNumber.toString())
+            : '';
+        final String ribbonPageNum = pos != null
+            ? (isAr
+                ? getArabicNumber(pos.pageNumber)
+                : pos.pageNumber.toString())
+            : '';
+
+        final tooltip = isOnThisVerse
+            ? (isAr
+                ? 'شريط القراءة مثبت على هذه الآية ($ribbonSurahName: $ribbonVerseNum) • انقر للإزالة'
+                : 'Шёлковая лента на этом аяте ($ribbonSurahName • $ribbonVerseNum) • Нажмите, чтобы снять')
+            : (isOnThisPage
                 ? (isAr
-                    ? 'الشريط في صفحة $ribbonPage • انقر للانتقال، اضغط مطولاً للوضع هنا'
-                    : 'Лента на стр. $ribbonPage • Нажмите для перехода, удерживайте чтобы переложить')
-                : (isAr
-                    ? 'وضع شريط القراءة في صفحة $currentPage'
-                    : 'Положить шёлковую ленту (стр. $currentPage)'));
+                    ? 'الشريط على الآية $ribbonVerseNum • انقر للتركيز، اضغط مطولاً للنقل هنا'
+                    : 'Лента на аяте $ribbonSurahName • $ribbonVerseNum • Нажмите для перехода к аяту')
+                : (hasRibbonElsewhere
+                    ? (isAr
+                        ? 'الشريط في $ribbonSurahName ($ribbonVerseNum) • صفحة $ribbonPageNum • انقر للانتقال'
+                        : 'Лента: $ribbonSurahName • $ribbonVerseNum (стр. $ribbonPageNum) • Нажмите для перехода')
+                    : (isAr
+                        ? 'وضع شريط القراءة هنا'
+                        : 'Положить шёлковую ленту сюда')));
 
         return Tooltip(
           message: tooltip,
@@ -480,47 +517,79 @@ class _SilkRibbonHeaderButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             onTap: () async {
               HapticFeedback.selectionClick();
-              if (isOnThisPage) {
+              if (isOnThisVerse) {
                 await ribbonService.clearRibbon();
                 if (context.mounted) {
                   _showSnack(
                     context,
                     isAr
-                        ? 'تمت إزالة الشريط من صفحة $currentPage'
-                        : 'Шёлковая лента убрана со стр. $currentPage',
+                        ? 'تمت إزالة شريط القراءة'
+                        : 'Шёлковая лента убрана',
                   );
                 }
               } else if (hasRibbonElsewhere) {
-                goToPage(ribbonPage);
+                goToPage(
+                  pos.pageNumber,
+                  highlightSurah: pos.surahNumber,
+                  highlightVerse: pos.verseNumber,
+                  autoClearHighlight: true,
+                );
                 if (context.mounted) {
                   _showSnack(
                     context,
                     isAr
-                        ? 'الانتقال إلى الشريط (صفحة $ribbonPage)'
-                        : 'Переход к шёлковой ленте (стр. $ribbonPage)',
+                        ? 'الانتقال إلى الشريط: سورة $ribbonSurahName (الآية $ribbonVerseNum)'
+                        : 'Переход к ленте: $ribbonSurahName • Аят $ribbonVerseNum (стр. $ribbonPageNum)',
                   );
                 }
+              } else if (isOnThisPage && pos != null) {
+                goToPage(
+                  pos.pageNumber,
+                  highlightSurah: pos.surahNumber,
+                  highlightVerse: pos.verseNumber,
+                  autoClearHighlight: true,
+                );
               } else {
-                await ribbonService.setRibbonPage(currentPage);
+                await ribbonService.setRibbon(
+                  pageNumber: currentPage,
+                  surahNumber: currentSurah,
+                  verseNumber: currentVerse,
+                );
+                final sName = isAr
+                    ? Quran.instance.getSurahNameArabic(currentSurah)
+                    : Quran.instance.getSurahName(currentSurah);
+                final vNum = isAr
+                    ? getArabicNumber(currentVerse)
+                    : currentVerse.toString();
                 if (context.mounted) {
                   _showSnack(
                     context,
                     isAr
-                        ? 'تم وضع الشريط في صفحة $currentPage'
-                        : 'Шёлковая лента заложена на стр. $currentPage',
+                        ? 'تم وضع شريط القراءة على الآية ($sName: $vNum)'
+                        : 'Шёлковая лента заложена ($sName • $vNum, стр. $currentPage)',
                   );
                 }
               }
             },
             onLongPress: () async {
               HapticFeedback.heavyImpact();
-              await ribbonService.setRibbonPage(currentPage);
+              await ribbonService.setRibbon(
+                pageNumber: currentPage,
+                surahNumber: currentSurah,
+                verseNumber: currentVerse,
+              );
+              final sName = isAr
+                    ? Quran.instance.getSurahNameArabic(currentSurah)
+                    : Quran.instance.getSurahName(currentSurah);
+              final vNum = isAr
+                    ? getArabicNumber(currentVerse)
+                    : currentVerse.toString();
               if (context.mounted) {
                 _showSnack(
                   context,
                   isAr
-                      ? 'تم نقل الشريط إلى صفحة $currentPage'
-                      : 'Шёлковая лента переложена на стр. $currentPage',
+                      ? 'تم نقل الشريط إلى هذه الآية ($sName: $vNum)'
+                      : 'Шёлковая лента переложена ($sName • $vNum, стр. $currentPage)',
                 );
               }
             },
@@ -549,3 +618,4 @@ class _SilkRibbonHeaderButton extends StatelessWidget {
     );
   }
 }
+

@@ -71,6 +71,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
       widget.settingsController.isHorizontalScrolling;
 
   Timer? _readingStatsTimer;
+  Timer? _highlightClearTimer;
   DateTime _lastInteractionTime = DateTime.now();
 
   @override
@@ -226,13 +227,24 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     int pageNumber, {
     int? highlightSurah,
     int? highlightVerse,
+    bool autoClearHighlight = false,
   }) async {
+    _highlightClearTimer?.cancel();
     // 1. Set Highlight State
     if (highlightSurah != null && highlightVerse != null) {
       _highlightedVerseNotifier.value = (
         surah: highlightSurah,
         verse: highlightVerse,
       );
+      if (autoClearHighlight) {
+        _highlightClearTimer = Timer(const Duration(milliseconds: 2000), () {
+          if (!mounted) return;
+          if (_highlightedVerseNotifier.value?.surah == highlightSurah &&
+              _highlightedVerseNotifier.value?.verse == highlightVerse) {
+            _highlightedVerseNotifier.value = null;
+          }
+        });
+      }
     } else {
       _highlightedVerseNotifier.value = null;
     }
@@ -351,6 +363,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void dispose() {
     _readingStatsTimer?.cancel();
+    _highlightClearTimer?.cancel();
     // Restore system UI when leaving the screen
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _highlightedVerseNotifier.dispose();
@@ -586,6 +599,12 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             highlightedBlockKey: _highlightedBlockKey,
                             settingsController: widget.settingsController,
                             onVerseTap: _onVerseTapped,
+                            onRibbonFocus: (surah, verse) => _jumpToPage(
+                              index + 1,
+                              highlightSurah: surah,
+                              highlightVerse: verse,
+                              autoClearHighlight: true,
+                            ),
                             bookmarkRevision: bookmarkRevision,
                             onBookmarkChanged: () => bookmarkRevision.value++,
                           ),
@@ -612,6 +631,12 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         highlightedBlockKey: _highlightedBlockKey,
                         settingsController: widget.settingsController,
                         onVerseTap: _onVerseTapped,
+                        onRibbonFocus: (surah, verse) => _jumpToPage(
+                          index + 1,
+                          highlightSurah: surah,
+                          highlightVerse: verse,
+                          autoClearHighlight: true,
+                        ),
                         bookmarkRevision: bookmarkRevision,
                         onBookmarkChanged: () => bookmarkRevision.value++,
                       ),
@@ -674,6 +699,7 @@ class QuranPageWidget extends StatefulWidget {
     required this.highlightedBlockKey,
     required this.bookmarkRevision,
     this.onVerseTap,
+    this.onRibbonFocus,
     this.onBookmarkChanged,
     super.key,
   });
@@ -683,6 +709,7 @@ class QuranPageWidget extends StatefulWidget {
   final GlobalKey highlightedBlockKey;
   final ValueListenable<int> bookmarkRevision;
   final void Function(int surah, int verse)? onVerseTap;
+  final void Function(int surah, int verse)? onRibbonFocus;
   final VoidCallback? onBookmarkChanged;
   final FontSizeController fontSizeController;
   final SettingsController settingsController;
@@ -853,6 +880,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
           SilkRibbonWidget(
             pageNumber: widget.pageNumber,
             isAr: widget.settingsController.language == 'ar',
+            onTapRibbon: widget.onRibbonFocus,
           ),
         ],
       ),

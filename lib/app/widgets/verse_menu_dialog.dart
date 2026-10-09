@@ -5,6 +5,7 @@ import 'package:my_quran/app/l10n.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/services/notes_service.dart';
+import 'package:my_quran/app/services/ribbon_bookmark_service.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/widgets/bookmark_category_picker_sheet.dart';
 import 'package:my_quran/app/widgets/edit_note_dialog.dart';
@@ -34,6 +35,16 @@ class VerseMenuDialog extends StatefulWidget {
 class _VerseMenuDialogState extends State<VerseMenuDialog> {
   late final bookmarkService = BookmarkService();
   late final notesService = NotesService();
+  late final ribbonService = RibbonBookmarkService();
+
+  late bool isRibbonOnThisVerse = ribbonService.isRibbonOnVerse(
+    widget.surah,
+    widget.verse.number,
+  );
+  late final int versePage = Quran.instance.getPageNumber(
+    widget.surah,
+    widget.verse.number,
+  );
 
   late bool isBookmarked = bookmarkService.isBookmarked(
     widget.surah,
@@ -192,7 +203,28 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                   ),
                   const SizedBox(width: 6),
 
-                  // 3. Action: Bookmark
+                  // 3. Action: Silk Ribbon (Ляссе)
+                  _SpringPillButton(
+                    icon: Icon(
+                      isRibbonOnThisVerse
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      size: 19,
+                      color: isRibbonOnThisVerse
+                          ? const Color(0xFFC41E3A)
+                          : colorScheme.onSurface,
+                    ),
+                    label: s.ribbonBookmarkShort,
+                    backgroundColor: isRibbonOnThisVerse
+                        ? const Color(0xFFC41E3A).withOpacity(0.16)
+                        : null,
+                    foregroundColor:
+                        isRibbonOnThisVerse ? const Color(0xFFC41E3A) : null,
+                    onTap: () => _toggleRibbon(context),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // 4. Action: Bookmark
                   _SpringPillButton(
                     icon: Icon(
                       isBookmarked
@@ -281,6 +313,33 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     );
   }
 
+  Future<void> _toggleRibbon(BuildContext context) async {
+    HapticFeedback.mediumImpact();
+    final messenger = ScaffoldMessenger.of(context);
+    final placed = await ribbonService.toggleRibbonVerse(
+      pageNumber: versePage,
+      surahNumber: widget.surah,
+      verseNumber: widget.verse.number,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      isRibbonOnThisVerse = placed;
+    });
+
+    Navigator.of(context).pop();
+
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          placed ? s.ribbonPlacedOnVerse : s.ribbonRemoved,
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   Future<void> _openBookmarkPicker(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);

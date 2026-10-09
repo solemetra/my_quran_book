@@ -171,6 +171,12 @@ class S {
   String get add => 'Добавить';
   String get view => 'Просмотр';
   String get copiedToClipboard => 'Скопировано в буфер обмена';
+  String get ribbonBookmark => isAr ? 'شريط القراءة' : 'Лента-закладка';
+  String get ribbonBookmarkShort => isAr ? 'الشريط' : 'Лента';
+  String get ribbonPlacedOnVerse =>
+      isAr ? 'تم وضع شريط القراءة على هذه الآية ✓' : 'Шёлковая лента заложена на этот аят ✓';
+  String get ribbonRemoved =>
+      isAr ? 'تمت إزالة شريط القراءة' : 'Шёлковая лента убрана';
 
   // Закладки
   String get bookmarks => 'Закладки';
