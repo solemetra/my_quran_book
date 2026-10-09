@@ -33,7 +33,7 @@ class BackupPreview {
 }
 
 class BackupService {
-  static const String schema = 'com.my_quran.backup';
+  static const String schema = 'com.solemetra.quran.backup';
   static const int schemaVersion = 1;
 
   final BookmarkService _bookmarkService = BookmarkService();
@@ -66,7 +66,7 @@ class BackupService {
     final safeBuild = (appBuild == null) ? '0' : appBuild.toString();
 
     final fileName =
-        'my_quran-backup-v$schemaVersion-$safeVersion+$safeBuild-'
+        'quran-hd-backup-v$schemaVersion-$safeVersion+$safeBuild-'
         '${DateTime.now().toIso8601String().replaceAll(':', '-')}.json.gz';
 
     final file = File('${dir.path}/$fileName');
@@ -124,7 +124,7 @@ class BackupService {
     final ver = doc['schemaVersion'] as int? ?? 0;
     if (ver != schemaVersion) {
       throw StateError(
-        'Unsupported backup schemaVersion=$ver (supported=$schemaVersion)',
+        'Неподдерживаемая версия структуры копии: $ver (поддерживается: $schemaVersion)',
       );
     }
 
@@ -218,11 +218,12 @@ class BackupService {
 
     final obj = jsonDecode(utf8.decode(decoded));
     if (obj is! Map<String, dynamic>) {
-      throw const FormatException('Backup root is not a JSON object');
+      throw const FormatException('Файл поврежден или имеет неверный формат');
     }
 
-    if (obj['schema'] != schema) {
-      throw FormatException('Invalid schema: ${obj['schema']}');
+    final docSchema = obj['schema'];
+    if (docSchema != schema && docSchema != 'com.my_quran.backup') {
+      throw FormatException('Неподдерживаемый формат резервной копии: $docSchema');
     }
 
     return obj;

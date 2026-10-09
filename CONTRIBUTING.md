@@ -1,6 +1,6 @@
-# Contributing to My Quran Book
+# Contributing to Коран HD
 
-First off, thank you for considering contributing to **My Quran Book**! 
+First off, thank you for considering contributing to **Коран HD**! 
 
 ## 🎯 Core Philosophy
 1.  **Performance First:** We use `ScrollablePositionedList` and Hit-Testing because standard rendering is too slow for 600+ pages. Any PR that causes scroll jank will be rejected.

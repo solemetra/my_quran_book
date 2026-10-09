@@ -1,6 +1,6 @@
 # Copyright
 
-**My Quran Book** (`solemetra/my_quran_book`)  
+**Коран HD** (`solemetra/my_quran_book`)  
 Copyright © 2026 [solemetra](https://github.com/solemetra) and contributors.
 
 License: GNU General Public License version 3 (see [LICENSE](LICENSE)).

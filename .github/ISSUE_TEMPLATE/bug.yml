@@ -1,6 +1,6 @@
 name: Report a bug
 description: |
-  You found a bug in MyQuran application causing it to crash or
+  You found a bug in Quran HD application causing it to crash or
   throw an exception, a widget is buggy, or something looks wrong.
 labels:
   - bug

@@ -3,35 +3,24 @@
   <img src="fastlane/metadata/android/en-US/images/icon.png" alt="Logo" width="120" height="120">
   <br>
 
-  # My Quran Book
+  # Коран HD
 
-  Licensed under [GNU GPL v3](LICENSE). Source: [solemetra/my_quran_book](https://github.com/solemetra/my_quran_book)
+  Лицензия: [GNU GPL v3](LICENSE) • Репозиторий: [solemetra/my_quran_book](https://github.com/solemetra/my_quran_book)
 
 </div>
 
 ---
 
-## О проекте
+## О приложении
 
-Удобное, быстрое и полностью автономное приложение для чтения Священного Корана на планшетах и смартфонах.
+Быстрое, удобное и полностью автономное приложение для чтения Священного Корана на планшетах и смартфонах:
 
-| | |
-|---|---|
-| **Репозиторий** | https://github.com/solemetra/my_quran_book |
-| **Лицензия** | GPL-3.0 |
-
-### Changes in this fork (vs upstream 1.7.6)
-
-- English UI for menus and settings (Arabic Quran text and surah names unchanged)
-- Navigation: **Surah number → Juz → Verse** (page picker removed; surah name shown above wheels)
-- Al-Fatiha: Basmala shown separately; verse 1 not duplicated in body text
-- RTL forced for Quran text when UI language is English
-- Flutter SDK constraint relaxed for local builds (`>=3.38.5`)
-
----
-
-Lightweight offline Quran reader with fast search. No internet required. No analytics.  
-Hafs and Warsh readings.
+- **100% Офлайн**: не требует интернета, без рекламы и без аналитики.
+- **Риваяты**: Хафс и Варш (шрифты Медина и Усмани).
+- **Навигация**: Сура → Джуз → Аят с быстрым переходом.
+- **Статистика и Хатм**: учет времени чтения, серий дней и прогресса завершения Корана с дуа.
+- **Закладки и заметки**: гибкие категории с цветными метками и локальный экспорт/импорт.
+- **Адаптивный интерфейс**: Material You (M3 Expressive), фирменная изумрудная тема, сепия, AMOLED-режим и плавная прокрутка 120 FPS.
 
 ---
 

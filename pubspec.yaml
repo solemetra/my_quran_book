@@ -1,5 +1,5 @@
 name: my_quran
-description: A minimal app to read the Quran.
+description: Коран HD — удобное и быстрое чтение Корана без рекламы и интернета.
 license: GPL-3.0-or-later
 
 publish_to: "none" # Remove this line if you wish to publish to pub.dev

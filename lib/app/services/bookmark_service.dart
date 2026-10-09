@@ -29,14 +29,14 @@ class BookmarkService {
   // ──────────────────────────────────────────────
 
   static final List<BookmarkCategory> defaultCategories = [
-    const BookmarkCategory(id: 'default', title: 'عام', color: Colors.blue),
+    const BookmarkCategory(id: 'default', title: 'Общее', color: Colors.blue),
     const BookmarkCategory(
       id: 'memorization',
-      title: 'حفظ',
+      title: 'Заучивание',
       color: Colors.green,
     ),
-    const BookmarkCategory(id: 'review', title: 'مراجعة', color: Colors.orange),
-    const BookmarkCategory(id: 'tafsir', title: 'تفسير', color: Colors.purple),
+    const BookmarkCategory(id: 'review', title: 'Повторение', color: Colors.orange),
+    const BookmarkCategory(id: 'tafsir', title: 'Тафсир', color: Colors.purple),
   ];
 
   static BookmarkCategory get _defaultCategory =>

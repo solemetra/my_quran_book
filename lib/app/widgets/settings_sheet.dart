@@ -645,7 +645,7 @@ class _StepperRow extends StatelessWidget {
     this.isDefault = false,
     this.onReset,
     this.isAr = true,
-    this.resetLabel = 'Default',
+    this.resetLabel = 'По умолчанию',
   });
 
   final String label;
