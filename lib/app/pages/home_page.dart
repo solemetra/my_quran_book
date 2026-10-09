@@ -27,7 +27,6 @@ import 'package:my_quran/app/widgets/navigation_sheet.dart';
 import 'package:my_quran/app/widgets/verse_menu_dialog.dart';
 import 'package:my_quran/app/widgets/search_sheet.dart';
 import 'package:my_quran/app/widgets/pinned_header.dart';
-import 'package:my_quran/app/widgets/silk_ribbon.dart';
 import 'package:my_quran/quran/quran.dart';
 
 class HomePage extends StatefulWidget {
@@ -71,7 +70,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
       widget.settingsController.isHorizontalScrolling;
 
   Timer? _readingStatsTimer;
-  Timer? _highlightClearTimer;
   DateTime _lastInteractionTime = DateTime.now();
 
   @override
@@ -227,24 +225,13 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     int pageNumber, {
     int? highlightSurah,
     int? highlightVerse,
-    bool autoClearHighlight = false,
   }) async {
-    _highlightClearTimer?.cancel();
     // 1. Set Highlight State
     if (highlightSurah != null && highlightVerse != null) {
       _highlightedVerseNotifier.value = (
         surah: highlightSurah,
         verse: highlightVerse,
       );
-      if (autoClearHighlight) {
-        _highlightClearTimer = Timer(const Duration(milliseconds: 2000), () {
-          if (!mounted) return;
-          if (_highlightedVerseNotifier.value?.surah == highlightSurah &&
-              _highlightedVerseNotifier.value?.verse == highlightVerse) {
-            _highlightedVerseNotifier.value = null;
-          }
-        });
-      }
     } else {
       _highlightedVerseNotifier.value = null;
     }
@@ -363,7 +350,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void dispose() {
     _readingStatsTimer?.cancel();
-    _highlightClearTimer?.cancel();
     // Restore system UI when leaving the screen
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _highlightedVerseNotifier.dispose();
@@ -599,12 +585,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             highlightedBlockKey: _highlightedBlockKey,
                             settingsController: widget.settingsController,
                             onVerseTap: _onVerseTapped,
-                            onRibbonFocus: (surah, verse) => _jumpToPage(
-                              index + 1,
-                              highlightSurah: surah,
-                              highlightVerse: verse,
-                              autoClearHighlight: true,
-                            ),
                             bookmarkRevision: bookmarkRevision,
                             onBookmarkChanged: () => bookmarkRevision.value++,
                           ),
@@ -631,12 +611,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         highlightedBlockKey: _highlightedBlockKey,
                         settingsController: widget.settingsController,
                         onVerseTap: _onVerseTapped,
-                        onRibbonFocus: (surah, verse) => _jumpToPage(
-                          index + 1,
-                          highlightSurah: surah,
-                          highlightVerse: verse,
-                          autoClearHighlight: true,
-                        ),
                         bookmarkRevision: bookmarkRevision,
                         onBookmarkChanged: () => bookmarkRevision.value++,
                       ),
@@ -699,7 +673,6 @@ class QuranPageWidget extends StatefulWidget {
     required this.highlightedBlockKey,
     required this.bookmarkRevision,
     this.onVerseTap,
-    this.onRibbonFocus,
     this.onBookmarkChanged,
     super.key,
   });
@@ -709,7 +682,6 @@ class QuranPageWidget extends StatefulWidget {
   final GlobalKey highlightedBlockKey;
   final ValueListenable<int> bookmarkRevision;
   final void Function(int surah, int verse)? onVerseTap;
-  final void Function(int surah, int verse)? onRibbonFocus;
   final VoidCallback? onBookmarkChanged;
   final FontSizeController fontSizeController;
   final SettingsController settingsController;
@@ -826,63 +798,53 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     final fontFamily = widget.settingsController.fontFamily;
 
     return GestureDetector(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            color: Colors.transparent,
-            padding: EdgeInsets.symmetric(
-              horizontal: _pageHorizontalPadding(
-                baseFontSize,
-                MediaQuery.of(context).size.width,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (int i = 0; i < pageModel.surahs.length; i++) ...[
-                  if (pageModel.surahs[i].verses.any((v) => v.number == 1)) ...[
-                    _SurahHeader(
-                      surah: pageModel.surahs[i],
-                      fontSize: headerFontSize,
-                      fontFamily: fontFamily,
-                      settingsController: widget.settingsController,
-                    ),
-                    if (pageModel.surahs[i].hasBasmala ||
-                        pageModel.surahs[i].isAlfatihah ||
-                        fontFamily.isWarsh)
-                      _Basmala(
-                        fontSize: headerFontSize + 2,
-                        fontFamily: fontFamily,
-                      ),
-                  ],
-                  _SurahTextBlock(
-                    surahNumber: pageModel.surahs[i].surahNumber,
-                    block: pageModel.blocks[i],
-                    fontSize: baseFontSize,
-                    symbolFontSize: symbolFontSize,
-                    highlightedVerseListenable: widget.highlightedVerseListenable,
-                    highlightedBlockKey: widget.highlightedBlockKey,
-                    bookmarkRevision: widget.bookmarkRevision,
-                    onInteraction: _onVerseInteraction,
-                    settingsController: widget.settingsController,
-                    lineHeight: widget.fontSizeController.lineHeight,
-                  ),
-                ],
-                if (!widget.settingsController.isHorizontalScrolling)
-                  _PageEndDivider(
-                    pageNumber: widget.pageNumber,
-                    isAr: widget.settingsController.language == 'ar',
+      child: Container(
+        color: Colors.transparent,
+        padding: EdgeInsets.symmetric(
+          horizontal: _pageHorizontalPadding(
+            baseFontSize,
+            MediaQuery.of(context).size.width,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (int i = 0; i < pageModel.surahs.length; i++) ...[
+              if (pageModel.surahs[i].verses.any((v) => v.number == 1)) ...[
+                _SurahHeader(
+                  surah: pageModel.surahs[i],
+                  fontSize: headerFontSize,
+                  fontFamily: fontFamily,
+                  settingsController: widget.settingsController,
+                ),
+                if (pageModel.surahs[i].hasBasmala ||
+                    pageModel.surahs[i].isAlfatihah ||
+                    fontFamily.isWarsh)
+                  _Basmala(
+                    fontSize: headerFontSize + 2,
+                    fontFamily: fontFamily,
                   ),
               ],
-            ),
-          ),
-          SilkRibbonWidget(
-            pageNumber: widget.pageNumber,
-            isAr: widget.settingsController.language == 'ar',
-            onTapRibbon: widget.onRibbonFocus,
-          ),
-        ],
+              _SurahTextBlock(
+                surahNumber: pageModel.surahs[i].surahNumber,
+                block: pageModel.blocks[i],
+                fontSize: baseFontSize,
+                symbolFontSize: symbolFontSize,
+                highlightedVerseListenable: widget.highlightedVerseListenable,
+                highlightedBlockKey: widget.highlightedBlockKey,
+                bookmarkRevision: widget.bookmarkRevision,
+                onInteraction: _onVerseInteraction,
+                settingsController: widget.settingsController,
+                lineHeight: widget.fontSizeController.lineHeight,
+              ),
+            ],
+            if (!widget.settingsController.isHorizontalScrolling)
+              _PageEndDivider(
+                pageNumber: widget.pageNumber,
+                isAr: widget.settingsController.language == 'ar',
+              ),
+          ],
+        ),
       ),
     );
   }

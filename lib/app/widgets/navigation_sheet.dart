@@ -220,20 +220,20 @@ class _QuranNavigationBottomSheetState
             const SizedBox(height: 8),
 
             ListenableBuilder(
-              listenable: RibbonBookmarkService().ribbonNotifier,
+              listenable: RibbonBookmarkService().ribbonPageNotifier,
               builder: (context, _) {
-                final ribbonPos = RibbonBookmarkService().currentPosition;
-                if (ribbonPos == null) return const SizedBox(height: 4);
+                final ribbonPage = RibbonBookmarkService().currentRibbonPage;
+                if (ribbonPage == null) return const SizedBox(height: 4);
 
+                final pageData = Quran.instance.getPageData(ribbonPage);
+                final ribbonSurah =
+                    pageData.isNotEmpty ? pageData.first['surah']! : 1;
                 final surahTitle = s.isAr
-                    ? Quran.instance.getSurahNameArabic(ribbonPos.surahNumber)
-                    : Quran.instance.getSurahName(ribbonPos.surahNumber);
-                final verseText = s.isAr
-                    ? _toArabicNumber(ribbonPos.verseNumber)
-                    : ribbonPos.verseNumber.toString();
+                    ? Quran.instance.getSurahNameArabic(ribbonSurah)
+                    : Quran.instance.getSurahName(ribbonSurah);
                 final pageText = s.isAr
-                    ? _toArabicNumber(ribbonPos.pageNumber)
-                    : ribbonPos.pageNumber.toString();
+                    ? _toArabicNumber(ribbonPage)
+                    : ribbonPage.toString();
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -245,8 +245,8 @@ class _QuranNavigationBottomSheetState
                     ),
                     label: Text(
                       s.isAr
-                          ? 'الشريط: $surahTitle • آية $verseText (صفحة $pageText)'
-                          : 'Лента: $surahTitle • Аят $verseText (стр. $pageText)',
+                          ? 'علامة القراءة: $surahTitle (صفحة $pageText)'
+                          : 'Закладка: $surahTitle (стр. $pageText)',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -259,10 +259,12 @@ class _QuranNavigationBottomSheetState
                     backgroundColor:
                         colorScheme.primaryContainer.withOpacity(0.35),
                     onPressed: () {
+                      final first =
+                          pageData.isNotEmpty ? pageData.first : null;
                       widget.onNavigate(
-                        page: ribbonPos.pageNumber,
-                        surah: ribbonPos.surahNumber,
-                        verse: ribbonPos.verseNumber,
+                        page: ribbonPage,
+                        surah: first?['surah'] ?? 1,
+                        verse: first?['start'] ?? 1,
                       );
                       Navigator.pop(context);
                     },
