@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'package:my_quran/app/l10n.dart';
 import 'package:my_quran/app/models.dart';
+import 'package:my_quran/app/services/ribbon_bookmark_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/quran/quran.dart';
 
@@ -216,7 +217,58 @@ class _QuranNavigationBottomSheetState
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+
+            ListenableBuilder(
+              listenable: RibbonBookmarkService().ribbonPageNotifier,
+              builder: (context, _) {
+                final ribbonPage = RibbonBookmarkService().currentRibbonPage;
+                if (ribbonPage == null) return const SizedBox(height: 4);
+
+                final pageData = Quran.instance.getPageData(ribbonPage);
+                final ribbonSurah = pageData.isNotEmpty ? pageData.first['surah']! : 1;
+                final surahTitle = s.isAr
+                    ? Quran.instance.getSurahNameArabic(ribbonSurah)
+                    : Quran.instance.getSurahName(ribbonSurah);
+                final pageText = s.isAr
+                    ? _toArabicNumber(ribbonPage)
+                    : ribbonPage.toString();
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: ActionChip(
+                    avatar: Icon(
+                      Icons.bookmark_rounded,
+                      size: 16,
+                      color: colorScheme.primary,
+                    ),
+                    label: Text(
+                      s.isAr
+                          ? 'الشريط: $surahTitle (صفحة $pageText)'
+                          : 'Лента: $surahTitle (стр. $pageText)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    side: BorderSide(
+                      color: colorScheme.primary.withOpacity(0.3),
+                    ),
+                    backgroundColor: colorScheme.primaryContainer.withOpacity(0.35),
+                    onPressed: () {
+                      final first = pageData.isNotEmpty ? pageData.first : null;
+                      widget.onNavigate(
+                        page: ribbonPage,
+                        surah: first?['surah'] ?? 1,
+                        verse: first?['start'] ?? 1,
+                      );
+                      Navigator.pop(context);
+                    },
+                  ),
+                );
+              },
+            ),
 
             Expanded(
               child: Stack(

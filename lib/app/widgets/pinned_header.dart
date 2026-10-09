@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_quran/app/models.dart';
+import 'package:my_quran/app/services/ribbon_bookmark_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/quran/quran.dart';
@@ -97,20 +98,32 @@ class PinnedHeader extends StatelessWidget {
                 Positioned(
                   left: 0,
                   right: 0,
-                  child: GestureDetector(
-                    onTap: () => onPageNumberTapped(context),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: Text(
-                        pageNum,
-                        key: ValueKey(position.pageNumber),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Theme.of(context).colorScheme.primary,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () => onPageNumberTapped(context),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: Text(
+                            pageNum,
+                            key: ValueKey(position.pageNumber),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      _SilkRibbonHeaderButton(
+                        currentPage: position.pageNumber,
+                        goToPage: goToPage,
+                        isAr: s.isAr,
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -408,6 +421,131 @@ class _SearchSurahDialogState extends State<_SearchSurahDialog> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SilkRibbonHeaderButton extends StatelessWidget {
+  const _SilkRibbonHeaderButton({
+    required this.currentPage,
+    required this.goToPage,
+    required this.isAr,
+  });
+
+  final int currentPage;
+  final void Function(int page, {int? highlightSurah, int? highlightVerse})
+  goToPage;
+  final bool isAr;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final ribbonService = RibbonBookmarkService();
+
+    return ListenableBuilder(
+      listenable: ribbonService.ribbonPageNotifier,
+      builder: (context, _) {
+        final ribbonPage = ribbonService.currentRibbonPage;
+        final isOnThisPage = ribbonPage == currentPage;
+        final hasRibbonElsewhere = ribbonPage != null && !isOnThisPage;
+
+        final iconColor = isOnThisPage
+            ? colorScheme.primary
+            : (hasRibbonElsewhere
+                ? colorScheme.primary.withOpacity(0.75)
+                : colorScheme.onSurfaceVariant.withOpacity(0.4));
+
+        final iconData = isOnThisPage
+            ? Icons.bookmark_rounded
+            : (hasRibbonElsewhere
+                ? Icons.bookmark_outlined
+                : Icons.bookmark_border_rounded);
+
+        final tooltip = isOnThisPage
+            ? (isAr
+                ? 'شريط القراءة هنا (صفحة $currentPage) • انقر للإزالة'
+                : 'Шёлковая лента здесь (стр. $currentPage) • Нажмите, чтобы снять')
+            : (hasRibbonElsewhere
+                ? (isAr
+                    ? 'الشريط في صفحة $ribbonPage • انقر للانتقال، اضغط مطولاً للوضع هنا'
+                    : 'Лента на стр. $ribbonPage • Нажмите для перехода, удерживайте чтобы переложить')
+                : (isAr
+                    ? 'وضع شريط القراءة في صفحة $currentPage'
+                    : 'Положить шёлковую ленту (стр. $currentPage)'));
+
+        return Tooltip(
+          message: tooltip,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () async {
+              HapticFeedback.selectionClick();
+              if (isOnThisPage) {
+                await ribbonService.clearRibbon();
+                if (context.mounted) {
+                  _showSnack(
+                    context,
+                    isAr
+                        ? 'تمت إزالة الشريط من صفحة $currentPage'
+                        : 'Шёлковая лента убрана со стр. $currentPage',
+                  );
+                }
+              } else if (hasRibbonElsewhere) {
+                goToPage(ribbonPage);
+                if (context.mounted) {
+                  _showSnack(
+                    context,
+                    isAr
+                        ? 'الانتقال إلى الشريط (صفحة $ribbonPage)'
+                        : 'Переход к шёлковой ленте (стр. $ribbonPage)',
+                  );
+                }
+              } else {
+                await ribbonService.setRibbonPage(currentPage);
+                if (context.mounted) {
+                  _showSnack(
+                    context,
+                    isAr
+                        ? 'تم وضع الشريط في صفحة $currentPage'
+                        : 'Шёлковая лента заложена на стр. $currentPage',
+                  );
+                }
+              }
+            },
+            onLongPress: () async {
+              HapticFeedback.heavyImpact();
+              await ribbonService.setRibbonPage(currentPage);
+              if (context.mounted) {
+                _showSnack(
+                  context,
+                  isAr
+                      ? 'تم نقل الشريط إلى صفحة $currentPage'
+                      : 'Шёлковая лента переложена на стр. $currentPage',
+                );
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Icon(
+                iconData,
+                size: 19,
+                color: iconColor,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 }

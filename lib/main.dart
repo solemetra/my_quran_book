@@ -9,6 +9,7 @@ import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/pages/home_page.dart';
 import 'package:my_quran/app/services/data_migration_service.dart';
 import 'package:my_quran/app/services/reading_position_service.dart';
+import 'package:my_quran/app/services/ribbon_bookmark_service.dart';
 import 'package:my_quran/app/services/search_service.dart';
 import 'package:my_quran/app/services/settings_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
@@ -25,6 +26,7 @@ Future<void> main() async {
     settingsService: SettingsService(),
   );
   await settingsController.init();
+  await RibbonBookmarkService().init();
 
   unawaited(SearchService.init(settingsController.fontFamily.name));
 

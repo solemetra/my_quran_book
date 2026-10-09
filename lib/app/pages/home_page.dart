@@ -27,6 +27,7 @@ import 'package:my_quran/app/widgets/navigation_sheet.dart';
 import 'package:my_quran/app/widgets/verse_menu_dialog.dart';
 import 'package:my_quran/app/widgets/search_sheet.dart';
 import 'package:my_quran/app/widgets/pinned_header.dart';
+import 'package:my_quran/app/widgets/silk_ribbon.dart';
 import 'package:my_quran/quran/quran.dart';
 
 class HomePage extends StatefulWidget {
@@ -798,53 +799,62 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     final fontFamily = widget.settingsController.fontFamily;
 
     return GestureDetector(
-      child: Container(
-        color: Colors.transparent,
-        padding: EdgeInsets.symmetric(
-          horizontal: _pageHorizontalPadding(
-            baseFontSize,
-            MediaQuery.of(context).size.width,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (int i = 0; i < pageModel.surahs.length; i++) ...[
-              if (pageModel.surahs[i].verses.any((v) => v.number == 1)) ...[
-                _SurahHeader(
-                  surah: pageModel.surahs[i],
-                  fontSize: headerFontSize,
-                  fontFamily: fontFamily,
-                  settingsController: widget.settingsController,
-                ),
-                if (pageModel.surahs[i].hasBasmala ||
-                    pageModel.surahs[i].isAlfatihah ||
-                    fontFamily.isWarsh)
-                  _Basmala(
-                    fontSize: headerFontSize + 2,
-                    fontFamily: fontFamily,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            color: Colors.transparent,
+            padding: EdgeInsets.symmetric(
+              horizontal: _pageHorizontalPadding(
+                baseFontSize,
+                MediaQuery.of(context).size.width,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (int i = 0; i < pageModel.surahs.length; i++) ...[
+                  if (pageModel.surahs[i].verses.any((v) => v.number == 1)) ...[
+                    _SurahHeader(
+                      surah: pageModel.surahs[i],
+                      fontSize: headerFontSize,
+                      fontFamily: fontFamily,
+                      settingsController: widget.settingsController,
+                    ),
+                    if (pageModel.surahs[i].hasBasmala ||
+                        pageModel.surahs[i].isAlfatihah ||
+                        fontFamily.isWarsh)
+                      _Basmala(
+                        fontSize: headerFontSize + 2,
+                        fontFamily: fontFamily,
+                      ),
+                  ],
+                  _SurahTextBlock(
+                    surahNumber: pageModel.surahs[i].surahNumber,
+                    block: pageModel.blocks[i],
+                    fontSize: baseFontSize,
+                    symbolFontSize: symbolFontSize,
+                    highlightedVerseListenable: widget.highlightedVerseListenable,
+                    highlightedBlockKey: widget.highlightedBlockKey,
+                    bookmarkRevision: widget.bookmarkRevision,
+                    onInteraction: _onVerseInteraction,
+                    settingsController: widget.settingsController,
+                    lineHeight: widget.fontSizeController.lineHeight,
+                  ),
+                ],
+                if (!widget.settingsController.isHorizontalScrolling)
+                  _PageEndDivider(
+                    pageNumber: widget.pageNumber,
+                    isAr: widget.settingsController.language == 'ar',
                   ),
               ],
-              _SurahTextBlock(
-                surahNumber: pageModel.surahs[i].surahNumber,
-                block: pageModel.blocks[i],
-                fontSize: baseFontSize,
-                symbolFontSize: symbolFontSize,
-                highlightedVerseListenable: widget.highlightedVerseListenable,
-                highlightedBlockKey: widget.highlightedBlockKey,
-                bookmarkRevision: widget.bookmarkRevision,
-                onInteraction: _onVerseInteraction,
-                settingsController: widget.settingsController,
-                lineHeight: widget.fontSizeController.lineHeight,
-              ),
-            ],
-            if (!widget.settingsController.isHorizontalScrolling)
-              _PageEndDivider(
-                pageNumber: widget.pageNumber,
-                isAr: widget.settingsController.language == 'ar',
-              ),
-          ],
-        ),
+            ),
+          ),
+          SilkRibbonWidget(
+            pageNumber: widget.pageNumber,
+            isAr: widget.settingsController.language == 'ar',
+          ),
+        ],
       ),
     );
   }
