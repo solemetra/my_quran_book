@@ -11,6 +11,7 @@ import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/design_tokens.dart';
 import 'package:my_quran/app/widgets/khatm_celebration_dialog.dart';
+import 'package:my_quran/app/widgets/quran_wisdom_dialog.dart';
 import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
 import 'package:my_quran/quran/quran.dart';
 import 'package:share_plus/share_plus.dart';
@@ -291,54 +292,58 @@ class SettingsSheet extends StatelessWidget {
                   title: s.aboutApp,
                   subtitle: '${s.appName} • v1.0.0 (10)',
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.menu_book_rounded,
-                            size: 24,
-                            color: colorScheme.primary,
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      s.appName,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'v1.0.0 (10)',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  s.appDescription,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => _openEasterEgg(context, isAr),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.menu_book_rounded,
+                              size: 24,
+                              color: colorScheme.primary,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        s.appName,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'v1.0.0 (10)',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    s.appDescription,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const _ThinDivider(),
@@ -575,6 +580,14 @@ class SettingsSheet extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _openEasterEgg(BuildContext context, bool isAr) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (_) => QuranWisdomEasterEggDialog(isAr: isAr),
     );
   }
 
