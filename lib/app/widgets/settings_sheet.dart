@@ -499,8 +499,8 @@ class SettingsSheet extends StatelessWidget {
               children: [
                 Text(
                   isAr
-                      ? 'يلتزم تطبيق Quran Book بحماية خصوصيتك بشكل كامل وبأعلى المعايير:'
-                      : 'Приложение Quran Book уважает вашу конфиденциальность и создано для комфортного и безопасного чтения Священного Корана:',
+                      ? 'يلتزم تطبيق ${s.appName} بحماية خصوصيتك بشكل كامل وبأعلى المعايير:'
+                      : 'Приложение ${s.appName} уважает вашу конфиденциальность и создано для комфортного и безопасного чтения Священного Корана:',
                   style: const TextStyle(fontWeight: FontWeight.w600, height: 1.4),
                 ),
                 const SizedBox(height: 12),

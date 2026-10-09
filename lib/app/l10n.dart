@@ -83,7 +83,7 @@ class S {
 
   // О приложении
   String get aboutApp => isAr ? 'حول التطبيق' : (isEn ? 'About' : 'О приложении');
-  String get appName => 'Quran Book';
+  String get appName => isAr ? 'القرآن الكريم HD' : (isEn ? 'Quran HD' : 'Коран HD');
   String get appDescription => isAr
       ? 'مصحف إلكتروني بدون إنترنت وبدون إعلانات'
       : (isEn ? 'Minimal offline Quran reading app without ads' : 'Удобный офлайн-Коран без рекламы');
@@ -104,8 +104,8 @@ class S {
       ? 'شارك التطبيق مع أهلك وأصدقائك'
       : (isEn ? 'Share with family and friends' : 'Рассказать о приложении близким');
   String get shareAppMessage => isAr
-      ? 'تطبيق Quran Book لقراءة القرآن الكريم بدون إنترنت وبدون إعلانات'
-      : 'Quran Book — удобное чтение Корана без интернета и рекламы.';
+      ? 'تطبيق القرآن الكريم HD لقراءة القرآن الكريم بدون إنترنت وبدون إعلانات'
+      : (isEn ? 'Quran HD — minimal offline Quran reading app without ads.' : 'Коран HD — удобное чтение Корана без интернета и рекламы.');
 
   // Статистика чтения
   String get readingStats => isAr ? 'إحصائيات القراءة' : 'Статистика чтения';
