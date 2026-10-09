@@ -301,15 +301,15 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         width: double.infinity,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: colorScheme.tertiaryContainer.applyOpacity(0.3),
+          color: colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(8),
           border: Border(
             right: isAr ? BorderSide(
-              color: colorScheme.tertiary.applyOpacity(0.5),
+              color: colorScheme.tertiary,
               width: 3,
             ) : BorderSide.none,
             left: !isAr ? BorderSide(
-              color: colorScheme.tertiary.applyOpacity(0.5),
+              color: colorScheme.tertiary,
               width: 3,
             ) : BorderSide.none,
           ),

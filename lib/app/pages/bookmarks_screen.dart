@@ -39,6 +39,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   List<VerseBookmark> _allBookmarks = [];
   List<BookmarkCategory> _categories = [];
   String? _selectedCategoryId; // null = show all
+  VerseBookmark? _selectedBookmark;
   bool _loading = true;
   final _notesService = NotesService();
   Map<String, List<VerseNote>> _notesByVerse = {};
@@ -108,49 +109,123 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Builder(
         builder: (context) {
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(s.bookmarks),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.category_outlined),
-                  tooltip: s.categories,
-                  onPressed: _openCategoryManagement,
-                ),
-              ],
-            ),
-            body: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : AdaptiveContent(
-                    child: Column(
-                      children: [
-                        // ── Category filter chips ──
-                        _buildCategoryFilter(colorScheme),
+          final mq = MediaQuery.of(context);
+          final isSplitView = mq.size.width >= 720;
 
-                        // ── Bookmarks list ──
-                        Expanded(
-                          child: filtered.isEmpty
-                              ? _buildEmptyState()
-                              : ListView.separated(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  itemCount: filtered.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(height: 8),
-                                  itemBuilder: (context, index) {
-                                    return _buildBookmarkCard(
-                                      context,
-                                      filtered[index],
-                                    );
-                                  },
-                                ),
-                        ),
-                      ],
-                    ),
+            if (isSplitView && _selectedBookmark == null && filtered.isNotEmpty) {
+              _selectedBookmark = filtered.first;
+            } else if (isSplitView &&
+                _selectedBookmark != null &&
+                !filtered.any((b) => b.id == _selectedBookmark!.id)) {
+              _selectedBookmark = filtered.firstOrNull;
+            }
+
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(s.bookmarks),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.category_outlined),
+                    tooltip: s.categories,
+                    onPressed: _openCategoryManagement,
                   ),
-          );
+                ],
+              ),
+              body: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : AdaptiveContent(
+                      maxWidth: isSplitView ? 1200 : AppLayout.maxContentWidth,
+                      child: isSplitView
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Left Master
+                                Expanded(
+                                  flex: 5,
+                                  child: Column(
+                                    children: [
+                                      _buildCategoryFilter(colorScheme),
+                                      Expanded(
+                                        child: filtered.isEmpty
+                                            ? _buildEmptyState()
+                                            : ListView.separated(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 8,
+                                                ),
+                                                itemCount: filtered.length,
+                                                separatorBuilder: (_, __) =>
+                                                    const SizedBox(height: 8),
+                                                itemBuilder: (context, index) {
+                                                  final b = filtered[index];
+                                                  return _buildBookmarkCard(
+                                                    context,
+                                                    b,
+                                                    isSelected:
+                                                        _selectedBookmark?.id == b.id,
+                                                    onSelect: () => setState(
+                                                      () => _selectedBookmark = b,
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                VerticalDivider(
+                                  width: 1,
+                                  thickness: 1,
+                                  color: colorScheme.outlineVariant,
+                                ),
+                                // Right Detail Pane
+                                Expanded(
+                                  flex: 6,
+                                  child: _selectedBookmark == null
+                                      ? Center(
+                                          child: Text(
+                                            s.selectItemToPreview,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge
+                                                ?.copyWith(
+                                                  color: colorScheme.onSurfaceVariant,
+                                                ),
+                                          ),
+                                        )
+                                      : _buildBookmarkDetailPane(
+                                          context,
+                                          _selectedBookmark!,
+                                        ),
+                                ),
+                              ],
+                            )
+                          : Column(
+                              children: [
+                                _buildCategoryFilter(colorScheme),
+                                Expanded(
+                                  child: filtered.isEmpty
+                                      ? _buildEmptyState()
+                                      : ListView.separated(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                          itemCount: filtered.length,
+                                          separatorBuilder: (_, __) =>
+                                              const SizedBox(height: 8),
+                                          itemBuilder: (context, index) {
+                                            return _buildBookmarkCard(
+                                              context,
+                                              filtered[index],
+                                            );
+                                          },
+                                        ),
+                                ),
+                              ],
+                            ),
+                    ),
+            );
         },
       ),
     );
@@ -296,7 +371,12 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   // Bookmark card
   // ─────────────────────────────────────────────
 
-  Widget _buildBookmarkCard(BuildContext context, VerseBookmark bookmark) {
+  Widget _buildBookmarkCard(
+    BuildContext context,
+    VerseBookmark bookmark, {
+    bool isSelected = false,
+    VoidCallback? onSelect,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     final category = _getCategoryFor(bookmark);
     final surahName = isAr 
@@ -330,13 +410,19 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       ),
       child: Card(
         elevation: 0,
+        color: isSelected
+            ? colorScheme.surfaceContainerHigh
+            : colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: colorScheme.outlineVariant),
+          borderRadius: AppShapes.borderMedium,
+          side: BorderSide(
+            color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+            width: isSelected ? 2 : 1,
+          ),
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => _onBookmarkTap(bookmark),
+          borderRadius: AppShapes.borderMedium,
+          onTap: onSelect ?? () => _onBookmarkTap(bookmark),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -468,9 +554,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: (category?.color ?? colorScheme.primary)
-                        .applyOpacity(0.06),
-                    borderRadius: BorderRadius.circular(10),
+                    color: colorScheme.surfaceContainerLow,
+                    borderRadius: AppShapes.borderSmall,
                     border: Border(
                       right: isAr
                           ? BorderSide(
@@ -549,12 +634,176 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                   child: Text(
                     _formatDate(bookmark.createdAt),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.applyOpacity(0.6),
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // Detail Pane (Tablet Split View)
+  // ─────────────────────────────────────────────
+
+  Widget _buildBookmarkDetailPane(BuildContext context, VerseBookmark bookmark) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final category = _getCategoryFor(bookmark);
+    final surahName = isAr
+        ? Quran.instance.getSurahNameArabic(bookmark.surah)
+        : Quran.instance.getSurahName(bookmark.surah);
+    final verseText = Quran.instance.getVerse(bookmark.surah, bookmark.verse);
+    final verseNum = isAr ? getArabicNumber(bookmark.verse) : bookmark.verse.toString();
+    final pageNum = isAr ? getArabicNumber(bookmark.pageNumber) : bookmark.pageNumber.toString();
+    final verseKey = '${bookmark.surah}:${bookmark.verse}';
+    final verseNotes = _notesByVerse[verseKey] ?? const <VerseNote>[];
+
+    return Md3SpringAppear(
+      key: ValueKey('detail_${bookmark.id}'),
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: AppShapes.borderLarge,
+          border: Border.all(color: colorScheme.outlineVariant),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${s.surahLabel} $surahName',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${s.verse} $verseNum  •  ${s.page} $pageNum  •  ${_formatDate(bookmark.createdAt)}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (category != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: category.color.applyOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        s.bookmarkCategoryTitle(category.id, category.title),
+                        style: TextStyle(
+                          color: category.color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+
+              // Full Verse Text
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: AppShapes.borderMedium,
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Text(
+                  verseText,
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.rtl,
+                  style: TextStyle(
+                    fontFamily: FontFamily.hafs.name,
+                    fontSize: 24,
+                    height: 2.0,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () => _onBookmarkTap(bookmark),
+                      icon: const Icon(Icons.auto_stories_rounded, size: 20),
+                      label: Text(s.goToVerse),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => _openNotesForVerse(bookmark.surah, bookmark.verse),
+                    icon: const Icon(Icons.note_alt_outlined, size: 18),
+                    label: Text(verseNotes.isNotEmpty ? '${s.notes} (${verseNotes.length})' : s.addNote),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.outlined(
+                    tooltip: s.changeCategory,
+                    onPressed: () => _changeCategory(bookmark),
+                    icon: const Icon(Icons.category_outlined, size: 20),
+                  ),
+                  IconButton.outlined(
+                    tooltip: s.delete,
+                    onPressed: () => _deleteBookmark(bookmark),
+                    icon: Icon(Icons.delete_outline, size: 20, color: colorScheme.error),
+                  ),
+                ],
+              ),
+
+              // Notes section if any
+              if (verseNotes.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Text(
+                  s.notes,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.primary,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                ...verseNotes.map(
+                  (n) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: AppShapes.borderSmall,
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
+                    child: Text(
+                      n.text,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            height: 1.4,
+                          ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),

@@ -202,7 +202,7 @@ class PinnedHeader extends StatelessWidget {
                   ),
                   side: WidgetStatePropertyAll(
                     BorderSide(
-                      color: colorScheme.outlineVariant.applyOpacity(0.5),
+                      color: colorScheme.outlineVariant,
                     ),
                   ),
                 ),

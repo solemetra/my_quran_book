@@ -5,6 +5,7 @@ class S {
   S([this.lang = 'ru']);
 
   bool get isAr => lang == 'ar';
+  bool get isEn => lang == 'en';
 
   // Шторка навигации
   String get page => 'Страница';
@@ -218,6 +219,33 @@ class S {
   String get invalidPageNumber =>
       'Пожалуйста, введите корректный номер страницы';
   String get enterPageNumberPrompt => 'Пожалуйста, введите номер страницы';
+
+  // Khatm Celebration & Split-view
+  String get khatmCongratulations => isAr
+      ? 'مبارك ختم القرآن الكريم!'
+      : (isEn ? 'Congratulations on Completing Khatm!' : 'Поздравляем с завершением Хатма!');
+  String get khatmCompletedDesc => isAr
+      ? 'لقد أتممت قراءة 604 صفحات من القرآن الكريم. تقبل الله منكم صالح الأعمال!'
+      : (isEn
+          ? 'You have read all 604 pages of the Holy Quran. May Allah accept your reading!'
+          : 'Вы прочитали все 604 страницы Священного Корана. Да примет Всевышний ваше чтение!');
+  String get khatmDuaTitle => isAr
+      ? 'دعاء ختم القرآن'
+      : (isEn ? 'Dua of Khatm Quran' : 'Дуа завершения Корана');
+  String get khatmDuaText => isAr
+      ? 'اللَّهُمَّ ارْحَمْنِي بِالقُرْآنِ، وَاجْعَلْهُ لِي إِمَاماً وَنُوراً وَهُدًى وَرَحْمَةً، اللَّهُمَّ ذَكِّرْنِي مِنْهُ مَا نَسِيتُ، وَعَلِّمْنِي مِنْهُ مَا جَهِلْتُ، وَارْزُقْنِي تِلاَوَتَهُ آنَاءَ اللَّيْلِ وَأَطْرَافَ النَّهَارِ.'
+      : (isEn
+          ? 'O Allah, have mercy upon me through the Quran, and make it for me a guide, light, guidance, and mercy. O Allah, remind me of what I have forgotten of it, and teach me of it what I do not know.'
+          : 'اللَّهُمَّ ارْحَمْنِي بِالقُرْآنِ، وَاجْعَلْهُ لِي إِمَاماً وَنُوراً وَهُدًى وَرَحْمَةً\n\n«О Аллах, помилуй меня посредством Корана, сделай его для меня предводителем, светом, верным руководством и милостью. Напомни мне то, что я забыл, и научи тому, чего я не знал».');
+  String get startNewKhatm => isAr
+      ? 'بدء ختمة جديدة'
+      : (isEn ? 'Start New Khatm' : 'Начать новый Хатм');
+  String get selectItemToPreview => isAr
+      ? 'اختر عنصراً للمعاينة'
+      : (isEn ? 'Select an item to preview' : 'Выберите элемент для просмотра');
+  String get goToVerse => isAr
+      ? 'الانتقال إلى الآية'
+      : (isEn ? 'Go to verse' : 'Перейти к аяту');
 
   static S of(BuildContext context) {
     return S('ru');

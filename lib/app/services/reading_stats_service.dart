@@ -30,6 +30,7 @@ class ReadingStatsService extends ChangeNotifier {
   double get khatmProgress =>
       (_khatmPages.length / Quran.totalPagesCount).clamp(0.0, 1.0);
   int get khatmPercentage => (khatmProgress * 100).round();
+  bool get isKhatmCompleted => _khatmPages.length >= Quran.totalPagesCount;
 
   static String _formatDate(DateTime dt) {
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';

@@ -393,7 +393,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
           : Theme.of(context).colorScheme.surfaceContainerLow,
       border: Border(
         bottom: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant.applyOpacity(0.3),
+          color: Theme.of(context).colorScheme.outlineVariant,
         ),
       ),
     );

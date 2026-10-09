@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_quran/app/l10n.dart';
 import 'package:my_quran/app/models.dart';
-import 'package:my_quran/app/utils.dart';
 
 enum BookmarkPickerAction { select, remove }
 
@@ -70,7 +69,7 @@ class BookmarkCategoryPickerSheet extends StatelessWidget {
                   itemCount: categories.length + (isBookmarked ? 1 : 0),
                   separatorBuilder: (_, __) => Divider(
                     height: 1,
-                    color: colorScheme.outlineVariant.applyOpacity(0.4),
+                    color: colorScheme.outlineVariant,
                   ),
                   itemBuilder: (context, index) {
                     // Remove action (at bottom)

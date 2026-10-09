@@ -10,6 +10,7 @@ import 'package:my_quran/app/services/reading_stats_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/design_tokens.dart';
+import 'package:my_quran/app/widgets/khatm_celebration_dialog.dart';
 import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
 import 'package:my_quran/quran/quran.dart';
 
@@ -403,7 +404,7 @@ class _ThinDivider extends StatelessWidget {
       thickness: 0.5,
       indent: 16,
       endIndent: 16,
-      color: Theme.of(context).colorScheme.outlineVariant.applyOpacity(0.2),
+      color: Theme.of(context).colorScheme.outlineVariant,
     );
   }
 }
@@ -484,7 +485,7 @@ class _StepperRow extends StatelessWidget {
                     size: 18,
                     color: onDecrease != null
                         ? colorScheme.onSurface
-                        : colorScheme.onSurface.applyOpacity(0.25),
+                        : colorScheme.onSurfaceVariant.applyOpacity(0.38),
                   ),
                 ),
                 SizedBox(
@@ -506,7 +507,7 @@ class _StepperRow extends StatelessWidget {
                     size: 18,
                     color: onIncrease != null
                         ? colorScheme.onSurface
-                        : colorScheme.onSurface.applyOpacity(0.25),
+                        : colorScheme.onSurfaceVariant.applyOpacity(0.38),
                   ),
                 ),
               ],
@@ -731,7 +732,7 @@ class _ReadingStatsCard extends StatelessWidget {
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: colorScheme.outlineVariant.applyOpacity(0.4),
+              color: colorScheme.outlineVariant,
             ),
           ),
           child: Column(
@@ -837,11 +838,70 @@ class _ReadingStatsCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: stats.khatmProgress,
                   minHeight: 8,
-                  backgroundColor:
-                      colorScheme.surfaceContainerHighest.applyOpacity(0.5),
+                  backgroundColor: colorScheme.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation(colorScheme.primary),
                 ),
               ),
+
+              // Khatm Completed Hero Banner
+              if (stats.isKhatmCompleted) ...[
+                const SizedBox(height: 14),
+                InkWell(
+                  borderRadius: AppShapes.borderMedium,
+                  onTap: () => KhatmCelebrationDialog.show(
+                    context,
+                    s: s,
+                    isAr: isAr,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: AppShapes.borderMedium,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.workspace_premium_rounded,
+                          color: colorScheme.primary,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                s.khatmCongratulations,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: colorScheme.onPrimaryContainer,
+                                ),
+                              ),
+                              Text(
+                                s.khatmDuaTitle,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colorScheme.onPrimaryContainer
+                                      .applyOpacity(0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );

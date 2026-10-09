@@ -41,6 +41,7 @@ class _NotesScreenState extends State<NotesScreen> {
   String _query = '';
   int? _surahFilter; // null = all
   NotesSort _sort = NotesSort.updatedDesc;
+  VerseNote? _selectedNote;
 
   @override
   void initState() {
@@ -115,10 +116,41 @@ class _NotesScreenState extends State<NotesScreen> {
 
     if (res.action == NoteDialogAction.delete) {
       await _notesService.removeNoteById(note.id);
+      if (_selectedNote?.id == note.id) {
+        _selectedNote = null;
+      }
     } else {
-      await _notesService.updateNote(note.copyWith(text: res.text));
+      final updated = note.copyWith(text: res.text);
+      await _notesService.updateNote(updated);
+      if (_selectedNote?.id == note.id) {
+        _selectedNote = updated;
+      }
     }
     await _load();
+  }
+
+  Future<void> _delete(VerseNote note) async {
+    await _notesService.removeNoteById(note.id);
+    if (_selectedNote?.id == note.id) {
+      _selectedNote = null;
+    }
+    await _load();
+  }
+
+  void _navigateToNote(VerseNote note) {
+    final pageNumber = Quran.instance.getPageNumber(note.surah, note.verse);
+    if (widget.onNavigateToPage != null) {
+      Navigator.pop(context);
+      widget.onNavigateToPage!(
+        page: pageNumber,
+        surah: note.surah,
+        verse: note.verse,
+      );
+    }
+  }
+
+  String _formatDate(DateTime dt) {
+    return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
   }
 
   String _sortLabel(NotesSort s, S strings) {
@@ -139,11 +171,9 @@ class _NotesScreenState extends State<NotesScreen> {
       hintText: hintText,
       prefixIcon: prefixIconData != null ? Icon(prefixIconData) : null,
       labelText: labelText,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      border: const OutlineInputBorder(borderRadius: AppShapes.borderMedium),
       filled: true,
-      fillColor: Theme.of(
-        context,
-      ).colorScheme.surfaceContainerHighest.applyOpacity(0.3),
+      fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
     );
   }
 
@@ -152,6 +182,13 @@ class _NotesScreenState extends State<NotesScreen> {
     final s = S.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final items = _filtered;
+    final isSplitView = MediaQuery.of(context).size.width >= 720;
+
+    if (isSplitView && items.isNotEmpty) {
+      if (_selectedNote == null || !items.any((n) => n.id == _selectedNote!.id)) {
+        _selectedNote = items.first;
+      }
+    }
 
     return Directionality(
       textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
@@ -172,291 +209,504 @@ class _NotesScreenState extends State<NotesScreen> {
             ),
           ],
         ),
-
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : AdaptiveContent(
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: _inputDecoration(
-                          prefixIconData: Icons.search,
-                          hintText: s.searchInNotesHint,
+                child: isSplitView
+                    ? Row(
+                        children: [
+                          // Left Master Pane (List & Filter)
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              children: [
+                                _buildSearchAndFilter(s),
+                                Expanded(
+                                  child: items.isEmpty
+                                      ? _buildEmptyState(s, colorScheme)
+                                      : _buildNotesList(
+                                          items,
+                                          s,
+                                          colorScheme,
+                                          isSplitView: true,
+                                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          VerticalDivider(
+                            width: 1,
+                            thickness: 1,
+                            color: colorScheme.outlineVariant,
+                          ),
+                          // Right Detail Pane
+                          Expanded(
+                            flex: 6,
+                            child: _selectedNote == null
+                                ? Center(
+                                    child: Text(
+                                      s.selectItemToPreview,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            color: colorScheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                  )
+                                : _buildNoteDetailPane(
+                                    _selectedNote!,
+                                    s,
+                                    colorScheme,
+                                  ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          _buildSearchAndFilter(s),
+                          Expanded(
+                            child: items.isEmpty
+                                ? _buildEmptyState(s, colorScheme)
+                                : _buildNotesList(
+                                    items,
+                                    s,
+                                    colorScheme,
+                                    isSplitView: false,
+                                  ),
+                          ),
+                        ],
+                      ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilter(S s) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: TextField(
+            controller: _searchController,
+            decoration: _inputDecoration(
+              prefixIconData: Icons.search,
+              hintText: s.searchInNotesHint,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: DropdownButtonFormField<int?>(
+            value: _surahFilter,
+            decoration: _inputDecoration(labelText: s.filterBySurah),
+            items: [
+              DropdownMenuItem<int?>(child: Text(s.allSurahs)),
+              for (int i = 1; i <= 114; i++)
+                DropdownMenuItem<int?>(
+                  value: i,
+                  child: Text(
+                    '${s.surahLabel} ${s.isAr ? Quran.instance.getSurahNameArabic(i) : Quran.instance.getSurahName(i)}',
+                  ),
+                ),
+            ],
+            onChanged: (v) => setState(() => _surahFilter = v),
+          ),
+        ),
+        if (_surahFilter != null)
+          TextButton.icon(
+            onPressed: () => setState(() {
+              _surahFilter = null;
+            }),
+            icon: const Icon(Icons.filter_list_off_outlined),
+            label: Text(s.clearFilter),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(S s, ColorScheme colorScheme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Md3SpringAppear(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 420),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 32,
+            ),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: AppShapes.borderLarge,
+              border: Border.all(
+                color: colorScheme.outlineVariant,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.note_alt_outlined,
+                    size: 32,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  s.noNotes,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotesList(
+    List<VerseNote> items,
+    S s,
+    ColorScheme colorScheme, {
+    required bool isSplitView,
+  }) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(12),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, i) {
+        final n = items[i];
+        final isSelected = isSplitView && _selectedNote?.id == n.id;
+        final surahName = s.isAr
+            ? Quran.instance.getSurahNameArabic(n.surah)
+            : Quran.instance.getSurahName(n.surah);
+
+        final verseNum = s.isAr
+            ? getArabicNumber(n.verse)
+            : n.verse.toString();
+        final pageNumber = Quran.instance.getPageNumber(n.surah, n.verse);
+        final pageNum = s.isAr
+            ? getArabicNumber(pageNumber)
+            : pageNumber.toString();
+        final verseText = Quran.instance.getVerse(n.surah, n.verse);
+        final previewVerse = verseText.length > 100
+            ? '${verseText.substring(0, 100)}...'
+            : verseText;
+        final fontFamilyName = widget.settingsController?.fontFamily.name ??
+            FontFamily.hafs.name;
+
+        return Card(
+          elevation: 0,
+          color: isSelected
+              ? colorScheme.surfaceContainerHigh
+              : colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: AppShapes.borderMedium,
+            side: BorderSide(
+              color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: InkWell(
+            borderRadius: AppShapes.borderMedium,
+            onTap: () {
+              if (isSplitView) {
+                setState(() => _selectedNote = n);
+              } else if (widget.onNavigateToPage != null) {
+                _navigateToNote(n);
+              } else {
+                _edit(n);
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header: Surah & Verse info + edit button
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${s.surahLabel} $surahName',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${s.verse} $verseNum  •  ${s.page} $pageNum',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontFamily: s.isAr
+                                        ? FontFamily
+                                            .arabicNumbersFontFamily
+                                            .name
+                                        : null,
+                                  ),
+                            ),
+                          ],
                         ),
                       ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          size: 20,
+                        ),
+                        color: colorScheme.onSurfaceVariant,
+                        onPressed: () => _edit(n),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Verse preview quote box
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: DropdownButtonFormField<int?>(
-                        value: _surahFilter,
-                        decoration: _inputDecoration(labelText: s.filterBySurah),
-                        items: [
-                          DropdownMenuItem<int?>(child: Text(s.allSurahs)),
-                          for (int i = 1; i <= 114; i++)
-                            DropdownMenuItem<int?>(
-                              value: i,
-                              child: Text(
-                                '${s.surahLabel} ${s.isAr ? Quran.instance.getSurahNameArabic(i) : Quran.instance.getSurahName(i)}',
-                              ),
-                            ),
-                        ],
-                        onChanged: (v) => setState(() => _surahFilter = v),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border(
+                        right: s.isAr
+                            ? BorderSide(
+                                color: colorScheme.primary,
+                                width: 3.5,
+                              )
+                            : BorderSide.none,
+                        left: !s.isAr
+                            ? BorderSide(
+                                color: colorScheme.primary,
+                                width: 3.5,
+                              )
+                            : BorderSide.none,
                       ),
                     ),
-                    if (_surahFilter != null)
-                      TextButton.icon(
-                        onPressed: () => setState(() {
-                          _surahFilter = null;
-                        }),
-                        icon: const Icon(Icons.filter_list_off_outlined),
-                        label: Text(s.clearFilter),
+                    child: Text(
+                      previewVerse,
+                      style: TextStyle(
+                        fontSize: 18,
+                        height: 1.85,
+                        color: colorScheme.onSurface,
+                        fontFamily: fontFamilyName,
                       ),
-                    Expanded(
-                      child: items.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Md3SpringAppear(
-                                  child: Container(
-                                    constraints:
-                                        const BoxConstraints(maxWidth: 420),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 32,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.surfaceContainerLow,
-                                      borderRadius: AppShapes.borderLarge,
-                                      border: Border.all(
-                                        color: colorScheme.outlineVariant
-                                            .applyOpacity(0.3),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          width: 64,
-                                          height: 64,
-                                          decoration: BoxDecoration(
-                                            color: colorScheme.primaryContainer,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.note_alt_outlined,
-                                            size: 32,
-                                            color: colorScheme.primary,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          s.noNotes,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleLarge
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: colorScheme.onSurface,
-                                              ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                      textAlign: TextAlign.right,
+                      textDirection: TextDirection.rtl,
+                    ),
+                  ),
+
+                  // User note text
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.sticky_note_2_outlined,
+                        size: 18,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          n.text,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                height: 1.45,
                               ),
-                            )
-                          : ListView.separated(
-                            padding: const EdgeInsets.all(12),
-                            itemCount: items.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 8),
-                            itemBuilder: (context, i) {
-                              final n = items[i];
-                              final surahName = s.isAr
-                                  ? Quran.instance.getSurahNameArabic(n.surah)
-                                  : Quran.instance.getSurahName(n.surah);
-
-                              final verseNum = s.isAr
-                                  ? getArabicNumber(n.verse)
-                                  : n.verse.toString();
-                              final pageNumber =
-                                  Quran.instance.getPageNumber(n.surah, n.verse);
-                              final pageNum = s.isAr
-                                  ? getArabicNumber(pageNumber)
-                                  : pageNumber.toString();
-                              final verseText =
-                                  Quran.instance.getVerse(n.surah, n.verse);
-                              final previewVerse = verseText.length > 100
-                                  ? '${verseText.substring(0, 100)}...'
-                                  : verseText;
-                              final fontFamilyName = widget
-                                      .settingsController?.fontFamily.name ??
-                                  FontFamily.hafs.name;
-
-                              return Card(
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    color: colorScheme.outlineVariant
-                                        .applyOpacity(0.4),
-                                  ),
-                                ),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () {
-                                    if (widget.onNavigateToPage != null) {
-                                      Navigator.pop(context);
-                                      widget.onNavigateToPage!(
-                                        page: pageNumber,
-                                        surah: n.surah,
-                                        verse: n.verse,
-                                      );
-                                    } else {
-                                      _edit(n);
-                                    }
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(14),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // Header: Surah & Verse info + edit button
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    '${s.surahLabel} $surahName',
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .titleSmall
-                                                        ?.copyWith(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: colorScheme
-                                                              .onSurfaceVariant,
-                                                        ),
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    '${s.verse} $verseNum  •  ${s.page} $pageNum',
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodySmall
-                                                        ?.copyWith(
-                                                          color: colorScheme
-                                                              .onSurfaceVariant,
-                                                          fontFamily: s.isAr
-                                                              ? FontFamily
-                                                                  .arabicNumbersFontFamily
-                                                                  .name
-                                                              : null,
-                                                        ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.edit_outlined,
-                                                size: 20,
-                                              ),
-                                              color: colorScheme
-                                                  .onSurfaceVariant,
-                                              onPressed: () => _edit(n),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-
-                                        // Verse preview quote box
-                                        Container(
-                                          width: double.infinity,
-                                          margin: const EdgeInsets.symmetric(
-                                            vertical: 4,
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 14,
-                                            vertical: 12,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: colorScheme.primary
-                                                .applyOpacity(0.06),
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            border: Border(
-                                              right: s.isAr
-                                                  ? BorderSide(
-                                                      color: colorScheme.primary,
-                                                      width: 3.5,
-                                                    )
-                                                  : BorderSide.none,
-                                              left: !s.isAr
-                                                  ? BorderSide(
-                                                      color: colorScheme.primary,
-                                                      width: 3.5,
-                                                    )
-                                                  : BorderSide.none,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            previewVerse,
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              height: 1.85,
-                                              color: colorScheme.onSurface,
-                                              fontFamily: fontFamilyName,
-                                            ),
-                                            textAlign: TextAlign.right,
-                                            textDirection: TextDirection.rtl,
-                                          ),
-                                        ),
-
-                                        // User note text
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Icon(
-                                              Icons.sticky_note_2_outlined,
-                                              size: 18,
-                                              color: colorScheme.primary,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                n.text,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.copyWith(
-                                                      height: 1.45,
-                                                    ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNoteDetailPane(VerseNote note, S s, ColorScheme colorScheme) {
+    final surahName = s.isAr
+        ? Quran.instance.getSurahNameArabic(note.surah)
+        : Quran.instance.getSurahName(note.surah);
+    final verseNum = s.isAr
+        ? getArabicNumber(note.verse)
+        : note.verse.toString();
+    final pageNumber = Quran.instance.getPageNumber(note.surah, note.verse);
+    final pageNum = s.isAr
+        ? getArabicNumber(pageNumber)
+        : pageNumber.toString();
+    final verseText = Quran.instance.getVerse(note.surah, note.verse);
+    final fontFamilyName = widget.settingsController?.fontFamily.name ??
+        FontFamily.hafs.name;
+
+    return Md3SpringAppear(
+      key: ValueKey('note_detail_${note.id}'),
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: AppShapes.borderLarge,
+          border: Border.all(color: colorScheme.outlineVariant),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${s.surahLabel} $surahName',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${s.verse} $verseNum  •  ${s.page} $pageNum  •  ${_formatDate(note.updatedAt)}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontFamily: s.isAr
+                                    ? FontFamily.arabicNumbersFontFamily.name
+                                    : null,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+
+              // Full Verse Text
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: AppShapes.borderMedium,
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Text(
+                  verseText,
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.rtl,
+                  style: TextStyle(
+                    fontFamily: fontFamilyName,
+                    fontSize: 24,
+                    height: 2.0,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Note box
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: AppShapes.borderMedium,
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.sticky_note_2_outlined,
+                          size: 20,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          s.note,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.primary,
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      note.text,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            height: 1.6,
+                            color: colorScheme.onSurface,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Actions
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () => _navigateToNote(note),
+                      icon: const Icon(Icons.auto_stories_rounded, size: 20),
+                      label: Text(s.goToVerse),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => _edit(note),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: Text(s.edit),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.outlined(
+                    onPressed: () => _delete(note),
+                    icon: Icon(Icons.delete_outline, color: colorScheme.error, size: 20),
+                    tooltip: s.delete,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
