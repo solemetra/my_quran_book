@@ -1,91 +1,60 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:my_quran/app/design_tokens.dart';
 
-/// Smooth Typewriter effect inspired by InlitX/streak
-class TypewriterText extends StatefulWidget {
-  const TypewriterText({
+/// Deterministic, letter-by-letter smooth typewriter renderer
+class SmoothTypewriter extends StatelessWidget {
+  const SmoothTypewriter({
     required this.text,
-    super.key,
-    this.style,
-    this.duration = const Duration(milliseconds: 2400),
-    this.delay = Duration.zero,
+    required this.progress,
+    required this.style,
+    this.color,
     this.textAlign = TextAlign.start,
+    super.key,
   });
 
   final String text;
-  final TextStyle? style;
-  final Duration duration;
-  final Duration delay;
+  final double progress;
+  final TextStyle style;
+  final Color? color;
   final TextAlign textAlign;
 
   @override
-  State<TypewriterText> createState() => _TypewriterTextState();
-}
-
-class _TypewriterTextState extends State<TypewriterText>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: widget.duration,
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.delay == Duration.zero) {
-      _controller.forward();
-    } else {
-      Future.delayed(widget.delay, () {
-        if (mounted) _controller.forward();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final base = widget.style ?? DefaultTextStyle.of(context).style;
-    final colour = base.color ?? Theme.of(context).colorScheme.onSurface;
+    final effectiveColor =
+        color ?? style.color ?? Theme.of(context).colorScheme.onSurface;
+    final typed = text.length * progress;
+    final full = typed.floor().clamp(0, text.length);
 
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final typed = widget.text.length * _controller.value;
-        final full = typed.floor().clamp(0, widget.text.length);
-
-        return Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(text: widget.text.substring(0, full)),
-              if (full < widget.text.length)
-                TextSpan(
-                  text: widget.text[full],
-                  style: TextStyle(
-                    color: colour.withOpacity((typed - full).clamp(0.0, 1.0)),
-                  ),
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: text.substring(0, full)),
+          if (full < text.length)
+            TextSpan(
+              text: text[full],
+              style: TextStyle(
+                color: effectiveColor.withOpacity(
+                  (typed - full).clamp(0.0, 1.0),
                 ),
-              if (full + 1 < widget.text.length)
-                TextSpan(
-                  text: widget.text.substring(full + 1),
-                  style: const TextStyle(color: Colors.transparent),
-                ),
-            ],
-          ),
-          style: base,
-          textAlign: widget.textAlign,
-        );
-      },
+              ),
+            ),
+          if (full + 1 < text.length)
+            TextSpan(
+              text: text.substring(full + 1),
+              style: const TextStyle(color: Colors.transparent),
+            ),
+        ],
+      ),
+      style: style,
+      textAlign: textAlign,
     );
   }
 }
 
-/// Easter egg dialog displaying sacred quotes on the virtues of the Quran
-class QuranWisdomEasterEggDialog extends StatelessWidget {
+/// The most beautiful easter egg card in the app:
+/// Sequential, staged Typewriter animation with rich MD3 Expressive styling.
+class QuranWisdomEasterEggDialog extends StatefulWidget {
   const QuranWisdomEasterEggDialog({
     required this.isAr,
     super.key,
@@ -94,199 +63,432 @@ class QuranWisdomEasterEggDialog extends StatelessWidget {
   final bool isAr;
 
   @override
+  State<QuranWisdomEasterEggDialog> createState() =>
+      _QuranWisdomEasterEggDialogState();
+}
+
+class _QuranWisdomEasterEggDialogState
+    extends State<QuranWisdomEasterEggDialog>
+    with TickerProviderStateMixin {
+  // Animation controllers for sequential staged delivery
+  late final AnimationController _ctrlQuote1;
+  late final AnimationController _ctrlAuthor1;
+  late final AnimationController _ctrlDivider;
+  late final AnimationController _ctrlQuote2;
+  late final AnimationController _ctrlAuthor2;
+
+  bool _isFinished = false;
+  Timer? _sequenceTimer1;
+  Timer? _sequenceTimer2;
+  Timer? _sequenceTimer3;
+  Timer? _sequenceTimer4;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _ctrlQuote1 = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2700),
+    );
+
+    _ctrlAuthor1 = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _ctrlDivider = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+
+    _ctrlQuote2 = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    );
+
+    _ctrlAuthor2 = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _startSequence();
+  }
+
+  void _startSequence() {
+    // Stage 1: Card opens -> small pause -> Quote 1 types out
+    _sequenceTimer1 = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      _ctrlQuote1.forward().then((_) {
+        if (!mounted || _isFinished) return;
+        // Stage 2: Author 1 fades in
+        _ctrlAuthor1.forward().then((_) {
+          if (!mounted || _isFinished) return;
+          // Stage 3: Divider emerges
+          _sequenceTimer2 = Timer(const Duration(milliseconds: 250), () {
+            if (!mounted || _isFinished) return;
+            _ctrlDivider.forward().then((_) {
+              if (!mounted || _isFinished) return;
+              // Stage 4: Quote 2 starts typing
+              _sequenceTimer3 = Timer(const Duration(milliseconds: 200), () {
+                if (!mounted || _isFinished) return;
+                _ctrlQuote2.forward().then((_) {
+                  if (!mounted || _isFinished) return;
+                  // Stage 5: Author 2 fades in
+                  _ctrlAuthor2.forward().then((_) {
+                    if (!mounted) return;
+                    setState(() {
+                      _isFinished = true;
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  void _fastForward() {
+    if (_isFinished) return;
+    _sequenceTimer1?.cancel();
+    _sequenceTimer2?.cancel();
+    _sequenceTimer3?.cancel();
+    _sequenceTimer4?.cancel();
+
+    _ctrlQuote1.value = 1.0;
+    _ctrlAuthor1.value = 1.0;
+    _ctrlDivider.value = 1.0;
+    _ctrlQuote2.value = 1.0;
+    _ctrlAuthor2.value = 1.0;
+
+    setState(() {
+      _isFinished = true;
+    });
+  }
+
+  @override
+  void dispose() {
+    _sequenceTimer1?.cancel();
+    _sequenceTimer2?.cancel();
+    _sequenceTimer3?.cancel();
+    _sequenceTimer4?.cancel();
+
+    _ctrlQuote1.dispose();
+    _ctrlAuthor1.dispose();
+    _ctrlDivider.dispose();
+    _ctrlQuote2.dispose();
+    _ctrlAuthor2.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final isAr = widget.isAr;
 
     final quote1Body = isAr
         ? '«إذا أردتم العلم فانثروا القرآن، فإن فيه علم الأولين والآخرين».\n\n«من كان يحب أن يعلم أنه يحب الله ورسوله، فلينظر: فإن كان يحب القرآن فهو يحب الله ورسوله».'
         : '«Если вы хотите обрести знания, то погрузитесь в Коран, ибо в нем содержатся знания первых и последних поколений».\n\n«Тот, кто любит Коран, пусть радуется, ибо он любит Аллаха и Его Посланника».';
 
-    final quote1Author = isAr ? '— عبد الله بن مسعود' : '— Абдуллах ибн Мас\'уд';
+    final quote1Author =
+        isAr ? '— عبد الله بن مسعود رضي الله عنه' : '— Абдуллах ибн Мас\'уд';
 
     final quote2Body = isAr
         ? '«كتاب الله، فيه نبأ ما قبلكم، وخبر ما بعدكم، وحكم ما بينكم، وهو الفصل ليس بالهزل».'
         : '«Коран — это Книга Аллаха. В ней — вести о том, что было до вас, предсказания о том, что будет после вас, и судейство между вами. Она — различение, а не забава».';
 
-    final quote2Author = isAr ? '— علي بن أبي طالب' : '— Али ибн Абу Талиб';
+    final quote2Author =
+        isAr ? '— علي بن أبي طالب رضي الله عنه' : '— Али ибн Абу Талиб';
 
     final title = isAr ? 'عن فضل القرآن' : 'О достоинстве Корана';
+    final subtitle =
+        isAr ? 'من أقوال الصحابة الكرام' : 'Жемчужины мудрости сподвижников';
     final closeBtnLabel = isAr ? 'إغلاق' : 'Закрыть';
+    final tapToSkipHint =
+        isAr ? 'المس لتخطي الرسوم' : 'Нажмите, чтобы показать весь текст';
 
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Md3SpringAppear(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 580),
-            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withOpacity(0.5),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.20),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
+          child: GestureDetector(
+            onTap: _fastForward,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 620),
+              padding: const EdgeInsets.fromLTRB(26, 28, 26, 22),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(
+                  color: colorScheme.primary.withOpacity(0.32),
+                  width: 1.4,
                 ),
-              ],
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Decorative top icon
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.primary.withOpacity(0.25),
-                            blurRadius: 20,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.auto_stories_rounded,
-                        size: 28,
-                        color: colorScheme.onPrimaryContainer,
-                      ),
-                    ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.24),
+                    blurRadius: 36,
+                    offset: const Offset(0, 12),
                   ),
-                  const SizedBox(height: 16),
-
-                  // Header title
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Quote 1 card
-                  _QuoteCard(
-                    colorScheme: colorScheme,
-                    body: quote1Body,
-                    author: quote1Author,
-                    delay: const Duration(milliseconds: 200),
-                    duration: const Duration(milliseconds: 2200),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Quote 2 card
-                  _QuoteCard(
-                    colorScheme: colorScheme,
-                    body: quote2Body,
-                    author: quote2Author,
-                    delay: const Duration(milliseconds: 1400),
-                    duration: const Duration(milliseconds: 2000),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Close button
-                  Align(
-                    alignment: Alignment.center,
-                    child: FilledButton.tonal(
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        closeBtnLabel,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
+                  BoxShadow(
+                    color: colorScheme.primary.withOpacity(0.12),
+                    blurRadius: 28,
+                    spreadRadius: 1,
                   ),
                 ],
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Top glowing medallion
+                    Center(
+                      child: Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              colorScheme.primary,
+                              colorScheme.primaryContainer,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.primary.withOpacity(0.38),
+                              blurRadius: 22,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.auto_stories_rounded,
+                          size: 28,
+                          color: colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
 
-class _QuoteCard extends StatelessWidget {
-  const _QuoteCard({
-    required this.colorScheme,
-    required this.body,
-    required this.author,
-    required this.delay,
-    required this.duration,
-  });
+                    // Title
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
 
-  final ColorScheme colorScheme;
-  final String body;
-  final String author;
-  final Duration delay;
-  final Duration duration;
+                    // Subtitle
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.center,
+                      style: textTheme.labelMedium?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withOpacity(0.35),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TypewriterText(
-            text: body,
-            delay: delay,
-            duration: duration,
-            style: TextStyle(
-              fontSize: 14.5,
-              height: 1.55,
-              fontWeight: FontWeight.w500,
-              color: colorScheme.onSurface,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TypewriterText(
-              text: author,
-              delay: delay + const Duration(milliseconds: 600),
-              duration: const Duration(milliseconds: 900),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.primary,
-                letterSpacing: 0.2,
+                    // Master Quote Card (Unified luxury container)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 22,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: colorScheme.outlineVariant.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // ── Quote 1 ──
+                          AnimatedBuilder(
+                            animation: _ctrlQuote1,
+                            builder: (context, _) {
+                              return SmoothTypewriter(
+                                text: quote1Body,
+                                progress: _ctrlQuote1.value,
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  height: 1.62,
+                                  fontWeight: FontWeight.w500,
+                                  color: colorScheme.onSurface,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Author 1 (fades in)
+                          FadeTransition(
+                            opacity: _ctrlAuthor1,
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                quote1Author,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // ── Ornamental Divider ──
+                          AnimatedBuilder(
+                            animation: _ctrlDivider,
+                            builder: (context, child) {
+                              return Opacity(
+                                opacity: _ctrlDivider.value,
+                                child: Transform.scale(
+                                  scale: 0.95 + (_ctrlDivider.value * 0.05),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Divider(
+                                      color: colorScheme.outlineVariant
+                                          .withOpacity(0.5),
+                                      thickness: 0.8,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                    ),
+                                    child: Text(
+                                      '✦   ✦   ✦',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.primary
+                                            .withOpacity(0.7),
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Divider(
+                                      color: colorScheme.outlineVariant
+                                          .withOpacity(0.5),
+                                      thickness: 0.8,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // ── Quote 2 ──
+                          AnimatedBuilder(
+                            animation: _ctrlQuote2,
+                            builder: (context, _) {
+                              return SmoothTypewriter(
+                                text: quote2Body,
+                                progress: _ctrlQuote2.value,
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  height: 1.62,
+                                  fontWeight: FontWeight.w500,
+                                  color: colorScheme.onSurface,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Author 2 (fades in)
+                          FadeTransition(
+                            opacity: _ctrlAuthor2,
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                quote2Author,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Tap to skip hint
+                    if (!_isFinished)
+                      Center(
+                        child: Text(
+                          tapToSkipHint,
+                          style: textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant.withOpacity(
+                              0.65,
+                            ),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 10),
+
+                    // Bottom close button
+                    Center(
+                      child: FilledButton.tonal(
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 36,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          closeBtnLabel,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
