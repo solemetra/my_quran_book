@@ -79,6 +79,7 @@ class S {
   String get importError => 'Ошибка импорта';
   String get success => 'Успешно';
   String get save => 'Сохранить';
+  String get close => isAr ? 'إغلاق' : (isEn ? 'Close' : 'Закрыть');
 
   // Статистика чтения
   String get readingStats => isAr ? 'إحصائيات القراءة' : 'Статистика чтения';

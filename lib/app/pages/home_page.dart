@@ -744,16 +744,15 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     if (isLongPress && context.mounted) {
       showDialog<void>(
         context: context,
-        builder: (_) => Dialog(
-          child: VerseMenuDialog(
-            language: widget.settingsController.language,
-            surah: surah,
-            fontSize: widget.fontSizeController.fontSize,
-            fontFamily: widget.settingsController.fontFamily,
-            verse: (
-              number: verseNumber,
-              text: Quran.instance.getVerse(surah, verseNumber),
-            ),
+        barrierColor: Colors.black26,
+        builder: (_) => VerseMenuDialog(
+          language: widget.settingsController.language,
+          surah: surah,
+          fontSize: widget.fontSizeController.fontSize,
+          fontFamily: widget.settingsController.fontFamily,
+          verse: (
+            number: verseNumber,
+            text: Quran.instance.getVerse(surah, verseNumber),
           ),
         ),
       ).then((_) {
