@@ -292,22 +292,18 @@ class SettingsSheet extends StatelessWidget {
                   subtitle: '${s.appName} • v1.0.0 (10)',
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Icon(
-                              Icons.menu_book_rounded,
-                              size: 28,
-                              color: colorScheme.onPrimaryContainer,
-                            ),
+                          Icon(
+                            Icons.menu_book_rounded,
+                            size: 24,
+                            color: colorScheme.primary,
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,22 +318,11 @@ class SettingsSheet extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.secondaryContainer,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        'v1.0.0 (10)',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: colorScheme.onSecondaryContainer,
-                                        ),
+                                    Text(
+                                      'v1.0.0 (10)',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
