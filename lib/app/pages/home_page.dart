@@ -839,13 +839,110 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
               ),
             ],
             if (!widget.settingsController.isHorizontalScrolling)
-              const Divider(height: 32, thickness: 2),
+              _PageEndDivider(
+                pageNumber: widget.pageNumber,
+                isAr: widget.settingsController.language == 'ar',
+              ),
           ],
         ),
       ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────
+// Page End Divider (── ۞ 45 ۞ ──)
+// ─────────────────────────────────────────────────────────
+
+class _PageEndDivider extends StatelessWidget {
+  const _PageEndDivider({
+    required this.pageNumber,
+    required this.isAr,
+  });
+
+  final int pageNumber;
+  final bool isAr;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final pageNumStr =
+        isAr ? getArabicNumber(pageNumber) : pageNumber.toString();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    colorScheme.outlineVariant.withOpacity(0.0),
+                    colorScheme.primary.withOpacity(0.4),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '۞',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: colorScheme.primary,
+                    height: 1.0,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  pageNumStr,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                    color: colorScheme.onSurfaceVariant.withOpacity(0.85),
+                    fontFamily: isAr
+                        ? FontFamily.arabicNumbersFontFamily.name
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '۞',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: colorScheme.primary,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    colorScheme.primary.withOpacity(0.4),
+                    colorScheme.outlineVariant.withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────
 // Surah Header
 // ─────────────────────────────────────────────────────────
