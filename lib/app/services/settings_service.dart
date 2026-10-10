@@ -20,7 +20,7 @@ class SettingsService {
 
   Future<String> loadLanguage() async {
     final language = await _prefs.getString('language');
-    if (language == null || language == 'ar' || language == 'en') {
+    if (language == null || (language != 'ru' && language != 'en')) {
       return 'ru';
     }
     return language;

@@ -4,7 +4,6 @@ import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/notes_service.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/widgets/edit_note_dialog.dart';
-import 'package:my_quran/quran/quran.dart';
 
 class VerseNotesSheet extends StatefulWidget {
   const VerseNotesSheet({
@@ -111,9 +110,7 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final surahName = s.isAr
-        ? Quran.instance.getSurahNameArabic(widget.surah)
-        : Quran.instance.getSurahName(widget.surah);
+    final surahName = s.surahName(widget.surah);
     final verseNum = s.isAr
         ? getArabicNumber(widget.verse)
         : widget.verse.toString();

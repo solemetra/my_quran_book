@@ -278,7 +278,7 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
                             return Padding(
                               padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
                               child: Text(
-                                'Найденные аяты (${_response.totalHits}):',
+                                s.foundAyahsCount(_response.totalHits),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -335,13 +335,22 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
 
   Widget _buildSurahCard(BuildContext context, int surahNum) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isEn = widget.language == 'en';
     final ruName = surahNamesRussian[surahNum - 1];
     final ruMeaning = surahMeaningsRussian[surahNum - 1];
+    final enName = surah[surahNum - 1]['name'] as String;
     final arName = surah[surahNum - 1]['arabic'] as String;
     final totalAyah = surah[surahNum - 1]['aya'] as int;
     final page = Quran.instance.getPageNumber(surahNum, 1);
     final isMakkah = surah[surahNum - 1]['place'] == 'Makkah';
-    final placeRu = isMakkah ? 'Мекканская' : 'Мединская';
+    final placeStr = isEn
+        ? (isMakkah ? 'Meccan' : 'Medinan')
+        : (isMakkah ? 'Мекканская' : 'Мединская');
+    final ayahsLabel = isEn ? '$totalAyah ayahs' : '$totalAyah аятов';
+    final pageLabel = isEn ? 'p. $page' : 'Стр. $page';
+    final surahTitle = isEn
+        ? 'Surah $enName'
+        : 'Сура $ruName ($ruMeaning)';
 
     return InkWell(
       onTap: () {
@@ -377,7 +386,7 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
                   Row(
                     children: [
                       Text(
-                        'Сура $ruName ($ruMeaning)',
+                        surahTitle,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -398,7 +407,7 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$placeRu • $totalAyah аятов • Стр. $page',
+                    '$placeStr • $ayahsLabel • $pageLabel',
                     style: TextStyle(
                       fontSize: 13,
                       color: colorScheme.onSurfaceVariant,
@@ -557,9 +566,8 @@ class SearchResultItem extends StatelessWidget {
     final plain = Quran.instance.getVerseInPlainText(hit.surah, hit.verse);
     final display = Quran.instance.getVerse(hit.surah, hit.verse);
     
-    final surahName = isAr 
-        ? Quran.instance.getSurahNameArabic(hit.surah) 
-        : Quran.instance.getSurahName(hit.surah);
+    final surahName =
+        Quran.instance.getSurahNameLocalized(hit.surah, language);
     final verseNum = isAr ? getArabicNumber(hit.verse) : hit.verse.toString();
 
     return InkWell(

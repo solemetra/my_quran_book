@@ -174,9 +174,7 @@ class _QuranNavigationBottomSheetState
     });
   }
 
-  String _surahName(int surah) => s.isAr
-      ? Quran.instance.getSurahNameArabic(surah)
-      : Quran.instance.getSurahName(surah);
+  String _surahName(int surah) => s.surahName(surah);
 
   @override
   Widget build(BuildContext context) {
@@ -228,9 +226,7 @@ class _QuranNavigationBottomSheetState
                 final pageData = Quran.instance.getPageData(ribbonPage);
                 final ribbonSurah =
                     pageData.isNotEmpty ? pageData.first['surah']! : 1;
-                final surahTitle = s.isAr
-                    ? Quran.instance.getSurahNameArabic(ribbonSurah)
-                    : Quran.instance.getSurahName(ribbonSurah);
+                final surahTitle = s.surahName(ribbonSurah);
                 final pageText = s.isAr
                     ? _toArabicNumber(ribbonPage)
                     : ribbonPage.toString();
@@ -244,9 +240,7 @@ class _QuranNavigationBottomSheetState
                       color: colorScheme.primary,
                     ),
                     label: Text(
-                      s.isAr
-                          ? 'علامة القراءة: $surahTitle (صفحة $pageText)'
-                          : 'Закладка: $surahTitle (стр. $pageText)',
+                      s.ribbonNavChip(surahTitle, pageText),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -424,10 +418,8 @@ class _QuranNavigationBottomSheetState
   Widget _buildSurahWheelItem(int number, int selected) {
     final colorScheme = Theme.of(context).colorScheme;
     final isSelected = number == selected;
-    final surahName = s.isAr
-        ? Quran.instance.getSurahNameArabic(number)
-        : Quran.instance.getSurahName(number);
-    final meaning = s.isAr
+    final surahName = s.surahName(number);
+    final meaning = (s.isAr || s.isEn)
         ? ''
         : ' (${Quran.instance.getSurahMeaningRussian(number)})';
     final numStr = s.isAr ? _toArabicNumber(number) : '$number';

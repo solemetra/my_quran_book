@@ -38,9 +38,7 @@ class PinnedHeader extends StatelessWidget {
         child: ValueListenableBuilder<ReadingPosition>(
           valueListenable: currentPositionNotifier,
           builder: (context, position, _) {
-            final surahName = s.isAr
-                ? Quran.instance.getSurahNameArabic(position.surahNumber)
-                : Quran.instance.getSurahName(position.surahNumber);
+            final surahName = s.surahName(position.surahNumber);
             final surahNum = s.isAr ? getArabicNumber(position.surahNumber) : position.surahNumber.toString();
             final pageNum = s.isAr ? getArabicNumber(position.pageNumber) : position.pageNumber.toString();
 
@@ -469,17 +467,12 @@ class _SilkRibbonHeaderButton extends StatelessWidget {
             ? (isAr ? getArabicNumber(ribbonPage) : ribbonPage.toString())
             : '';
 
+        final s = S.of(context);
         final tooltip = isOnThisPage
-            ? (isAr
-                ? 'علامة القراءة في صفحة $pageStr • انقر للإزالة'
-                : 'Закладка на стр. $pageStr • Нажмите, чтобы снять')
+            ? s.ribbonTooltipOnPage(pageStr)
             : (hasRibbonElsewhere
-                ? (isAr
-                    ? 'العلامة في صفحة $targetPageStr • انقر للانتقال، اضغط مطولاً للوضع هنا'
-                    : 'Закладка на стр. $targetPageStr • Нажмите для перехода, удерживайте чтобы переложить')
-                : (isAr
-                    ? 'وضع علامة في صفحة $pageStr'
-                    : 'Поставить закладку на стр. $pageStr'));
+                ? s.ribbonTooltipElsewhere(targetPageStr)
+                : s.ribbonTooltipSet(pageStr));
 
         return Tooltip(
           message: tooltip,
@@ -490,32 +483,17 @@ class _SilkRibbonHeaderButton extends StatelessWidget {
               if (isOnThisPage) {
                 await ribbonService.clearRibbon();
                 if (context.mounted) {
-                  _showSnack(
-                    context,
-                    isAr
-                        ? 'تمت إزالة العلامة من صفحة $pageStr'
-                        : 'Закладка убрана со стр. $pageStr',
-                  );
+                  _showSnack(context, s.ribbonRemoved(pageStr));
                 }
               } else if (hasRibbonElsewhere) {
                 goToPage(ribbonPage);
                 if (context.mounted) {
-                  _showSnack(
-                    context,
-                    isAr
-                        ? 'الانتقال إلى صفحة $targetPageStr'
-                        : 'Переход к закладке (стр. $targetPageStr)',
-                  );
+                  _showSnack(context, s.ribbonJump(targetPageStr));
                 }
               } else {
                 await ribbonService.setRibbonPage(currentPage);
                 if (context.mounted) {
-                  _showSnack(
-                    context,
-                    isAr
-                        ? 'تم وضع العلامة في صفحة $pageStr'
-                        : 'Закладка поставлена на стр. $pageStr',
-                  );
+                  _showSnack(context, s.ribbonPlaced(pageStr));
                 }
               }
             },
@@ -523,12 +501,7 @@ class _SilkRibbonHeaderButton extends StatelessWidget {
               HapticFeedback.heavyImpact();
               await ribbonService.setRibbonPage(currentPage);
               if (context.mounted) {
-                _showSnack(
-                  context,
-                  isAr
-                      ? 'تم نقل العلامة إلى صفحة $pageStr'
-                      : 'Закладка переложена на стр. $pageStr',
-                );
+                _showSnack(context, s.ribbonMoved(pageStr));
               }
             },
             child: Padding(

@@ -964,10 +964,16 @@ class _SurahHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S(settingsController.language);
     final isAr = settingsController.language == 'ar';
+    final isEn = settingsController.language == 'en';
     final surahNameRu = Quran.instance.getSurahName(surah.surahNumber);
     final surahMeaningRu =
         Quran.instance.getSurahMeaningRussian(surah.surahNumber);
     final surahNameAr = Quran.instance.getSurahNameArabic(surah.surahNumber);
+    final surahNameEn = Quran.instance.getSurahNameEnglish(surah.surahNumber);
+
+    final surahSubtitle = isEn
+        ? surahNameEn
+        : '$surahNameRu — $surahMeaningRu';
 
     String formatNum(int n) => isAr ? getArabicNumber(n) : n.toString();
 
@@ -1024,7 +1030,7 @@ class _SurahHeader extends StatelessWidget {
                   const SizedBox(height: 2),
                   if (!isAr)
                     Text(
-                      '$surahNameRu — $surahMeaningRu',
+                      surahSubtitle,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: (fontSize - 8).clamp(12.0, 20.0),

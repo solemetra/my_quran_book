@@ -237,6 +237,14 @@ class Quran {
     return surahNamesRussian[surahNumber - 1];
   }
 
+  ///Takes [surahNumber] and returns the Surah name in English
+  String getSurahNameEnglish(int surahNumber) {
+    if (surahNumber < 1 || surahNumber > totalSurahCount) {
+      throw RangeError.range(surahNumber, 1, totalSurahCount, 'surahNumber');
+    }
+    return surah[surahNumber - 1]['name']! as String;
+  }
+
   ///Takes [surahNumber] returns the Surah name in Arabic
   String getSurahNameArabic(int surahNumber) {
     if (surahNumber > 114 || surahNumber <= 0) {
@@ -248,6 +256,13 @@ class Quran {
       );
     }
     return surah[surahNumber - 1]['arabic']! as String;
+  }
+
+  ///Takes [surahNumber] and [lang] and returns localized Surah name
+  String getSurahNameLocalized(int surahNumber, String lang) {
+    if (lang == 'ar') return getSurahNameArabic(surahNumber);
+    if (lang == 'en') return getSurahNameEnglish(surahNumber);
+    return getSurahName(surahNumber);
   }
 
   ///Takes [surahNumber] and returns the Surah meaning/translation in Russian

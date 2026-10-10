@@ -165,6 +165,28 @@ class SettingsSheet extends StatelessWidget {
                   title: s.extraAndData,
                   subtitle: _extraDataSubtitle(context, s),
                   children: [
+                    _SegmentedRow(
+                      label: s.language,
+                      child: SegmentedButton<String>(
+                        segments: [
+                          ButtonSegment(
+                            value: 'ru',
+                            label: Text(s.langRu),
+                          ),
+                          ButtonSegment(
+                            value: 'en',
+                            label: Text(s.langEn),
+                          ),
+                        ],
+                        style: _segmentStyle(colorScheme),
+                        selected: {
+                          settingsController.language == 'en' ? 'en' : 'ru',
+                        },
+                        onSelectionChanged: (v) =>
+                            settingsController.language = v.first,
+                      ),
+                    ),
+                    const _ThinDivider(),
                     _ToggleRow(
                       icon: Icons.numbers_outlined,
                       title: s.showHizbNumber,
@@ -466,11 +488,13 @@ class SettingsSheet extends StatelessWidget {
   }
 
   String _extraDataSubtitle(BuildContext context, S s) {
-    return s.backup;
+    final langStr = settingsController.language == 'en' ? s.langEn : s.langRu;
+    return '$langStr • ${s.backup}';
   }
 
   void _showPrivacyPolicyDialog(BuildContext context, S s, bool isAr) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isEn = s.isEn;
     showDialog<void>(
       context: context,
       builder: (ctx) => Directionality(
@@ -490,40 +514,50 @@ class SettingsSheet extends StatelessWidget {
                 Text(
                   isAr
                       ? 'يلتزم تطبيق ${s.appName} بحماية خصوصيتك بشكل كامل وبأعلى المعايير:'
-                      : 'Приложение ${s.appName} уважает вашу конфиденциальность и создано для комфортного и безопасного чтения Священного Корана:',
+                      : (isEn
+                          ? 'The ${s.appName} app respects your privacy and is crafted for comfortable, secure reading of the Holy Quran:'
+                          : 'Приложение ${s.appName} уважает вашу конфиденциальность и создано для комфортного и безопасного чтения Священного Корана:'),
                   style: const TextStyle(fontWeight: FontWeight.w600, height: 1.4),
                 ),
                 const SizedBox(height: 12),
                 _privacyBullet(
                   context,
-                  title: isAr ? '١٠٠٪ بدون إنترنت' : '100% Офлайн',
+                  title: isAr ? '١٠٠٪ بدون إنترنت' : (isEn ? '100% Offline' : '100% Офлайн'),
                   desc: isAr
                       ? 'يعمل التطبيق بالكامل محلياً على جهازك ولا يتطلب أي اتصال بالشبكة.'
-                      : 'Приложение работает автономно и не требует подключения к интернету для чтения, закладок и заметок.',
+                      : (isEn
+                          ? 'The app runs entirely offline and requires no internet connection for reading, bookmarks, or notes.'
+                          : 'Приложение работает автономно и не требует подключения к интернету для чтения, закладок и заметок.'),
                 ),
                 const SizedBox(height: 8),
                 _privacyBullet(
                   context,
-                  title: isAr ? 'لا نجمع أي بيانات' : 'Без сбора данных',
+                  title: isAr ? 'لا نجمع أي بيانات' : (isEn ? 'No Data Collection' : 'Без сбора данных'),
                   desc: isAr
                       ? 'لا نقوم بجمع أو حفظ أو إرسال أي بيانات شخصية أو معلومات عن جهازك.'
-                      : 'Мы не собираем, не храним и не передаем персональные данные, идентификаторы или аналитику.',
+                      : (isEn
+                          ? 'We do not collect, store, or transmit any personal data, identifiers, or analytics.'
+                          : 'Мы не собираем, не храним и не передаем персональные данные, идентификаторы или аналитику.'),
                 ),
                 const SizedBox(height: 8),
                 _privacyBullet(
                   context,
-                  title: isAr ? 'بدون إعلانات' : 'Без рекламы и трекеров',
+                  title: isAr ? 'بدون إعلانات' : (isEn ? 'No Ads & No Trackers' : 'Без рекламы и трекеров'),
                   desc: isAr
                       ? 'التطبيق خالٍ تماماً من الإعلانات ومن أي برمجيات تتبع تجارية.'
-                      : 'Приложение полностью свободно от рекламы и любых сторонних маркетинговых модулей.',
+                      : (isEn
+                          ? 'The app is completely free from advertisements and any third-party marketing SDKs.'
+                          : 'Приложение полностью свободно от рекламы и любых сторонних маркетинговых модулей.'),
                 ),
                 const SizedBox(height: 8),
                 _privacyBullet(
                   context,
-                  title: isAr ? 'حفظ محلي' : 'Локальное хранение',
+                  title: isAr ? 'حفظ محلي' : (isEn ? 'Local Storage Only' : 'Локальное хранение'),
                   desc: isAr
                       ? 'جميع ملاحظاتك وإشاراتك المرجعية مخزنة في جهازك فقط ويمكنك تصديرها واستيرادها متى شئت.'
-                      : 'Все ваши закладки, заметки и статистика чтения хранятся только в памяти вашего устройства.',
+                      : (isEn
+                          ? 'All your bookmarks, notes, and reading statistics are stored exclusively on your device.'
+                          : 'Все ваши закладки, заметки и статистика чтения хранятся только в памяти вашего устройства.'),
                 ),
               ],
             ),

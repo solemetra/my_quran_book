@@ -89,7 +89,9 @@ class MyApp extends StatelessWidget {
             );
 
             return MaterialApp(
-              title: 'Коран HD',
+              title: settingsController.language == 'en'
+                  ? 'Quran HD'
+                  : 'Коран HD',
               debugShowCheckedModeBanner: false,
               locale: Locale(settingsController.language),
               supportedLocales: const [Locale('ru'), Locale('ar'), Locale('en')],

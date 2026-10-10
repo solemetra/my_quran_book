@@ -295,9 +295,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     final category = _getCategoryFor(bookmark);
-    final surahName = isAr 
-        ? Quran.instance.getSurahNameArabic(bookmark.surah) 
-        : Quran.instance.getSurahName(bookmark.surah);
+    final surahName = s.surahName(bookmark.surah);
     final verseText = Quran.instance.getVerse(bookmark.surah, bookmark.verse);
 
     final verseNum = isAr ? getArabicNumber(bookmark.verse) : bookmark.verse.toString();
@@ -705,9 +703,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     BuildContext context,
     VerseBookmark bookmark,
   ) async {
-    final surahName = isAr 
-        ? Quran.instance.getSurahNameArabic(bookmark.surah) 
-        : Quran.instance.getSurahName(bookmark.surah);
+    final surahName = s.surahName(bookmark.surah);
     final verseNum = isAr ? getArabicNumber(bookmark.verse) : bookmark.verse.toString();
     
     return showDialog<bool>(

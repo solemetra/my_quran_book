@@ -254,7 +254,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 DropdownMenuItem<int?>(
                   value: i,
                   child: Text(
-                    '${s.surahLabel} ${s.isAr ? Quran.instance.getSurahNameArabic(i) : Quran.instance.getSurahName(i)}',
+                    '${s.surahLabel} ${s.surahName(i)}',
                   ),
                 ),
             ],
@@ -335,9 +335,7 @@ class _NotesScreenState extends State<NotesScreen> {
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, i) {
         final n = items[i];
-        final surahName = s.isAr
-            ? Quran.instance.getSurahNameArabic(n.surah)
-            : Quran.instance.getSurahName(n.surah);
+        final surahName = s.surahName(n.surah);
 
         final verseNum = s.isAr
             ? getArabicNumber(n.verse)

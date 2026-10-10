@@ -98,9 +98,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final surahName = isAr
-        ? Quran.instance.getSurahNameArabic(widget.surah)
-        : Quran.instance.getSurahName(widget.surah);
+    final surahName = s.surahName(widget.surah);
     final verseNum = isAr
         ? getArabicNumber(widget.verse.number)
         : widget.verse.number.toString();
@@ -254,9 +252,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
 
   void _copyVerse(BuildContext context) {
     final messenger = ScaffoldMessenger.of(context);
-    final surahName = isAr
-        ? Quran.instance.getSurahNameArabic(widget.surah)
-        : Quran.instance.getSurahName(widget.surah);
+    final surahName = s.surahName(widget.surah);
     final verseInPlainText = Quran.instance.getVerseInPlainText(
       widget.surah,
       widget.verse.number,
