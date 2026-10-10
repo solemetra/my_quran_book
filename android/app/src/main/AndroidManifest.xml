@@ -7,7 +7,7 @@
         android:anyDensity="true" />
 
     <application
-        android:label="Коран HD"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
