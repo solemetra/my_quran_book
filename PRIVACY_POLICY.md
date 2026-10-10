@@ -1,6 +1,7 @@
 # Privacy Policy for Quran HD
 
-**Last updated:** October 2026
+**Last updated:** October 2026  
+**Public URL:** https://telegra.ph/Privacy-Policy-for-Quran-HD-10-10
 
 **Quran HD** ("the App") is developed and maintained by Solemetra. We are committed to protecting your privacy.
 
