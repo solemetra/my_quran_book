@@ -189,25 +189,47 @@ class _QuranWisdomEasterEggDialogState
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final isAr = widget.isAr;
+    final isEn = !isAr && Localizations.localeOf(context).languageCode == 'en';
 
     final quote1Body = isAr
         ? '«إذا أردتم العلم فانثروا القرآن، فإن فيه علم الأولين والآخرين».\n\n«من كان يحب أن يعلم أنه يحب الله ورسوله، فلينظر: فإن كان يحب القرآن فهو يحب الله ورسوله».'
-        : '«Если вы хотите обрести знания, то погрузитесь в Коран, ибо в нем содержатся знания первых и последних поколений».\n\n«Тот, кто любит Коран, пусть радуется, ибо он любит Аллаха и Его Посланника».';
+        : isEn
+            ? '“If you wish for knowledge, immerse yourselves in the Quran, for verily it contains the knowledge of the earlier and later generations.”\n\n“Whoever loves the Quran loves Allah and His Messenger.”'
+            : '«Если вы хотите обрести знания, то погрузитесь в Коран, ибо в нем содержатся знания первых и последних поколений».\n\n«Тот, кто любит Коран, пусть радуется, ибо он любит Аллаха и Его Посланника».';
 
-    final quote1Author =
-        isAr ? '— عبد الله بن مسعود رضي الله عنه' : '— Абдуллах ибн Мас\'уд';
+    final quote1Author = isAr
+        ? '— عبد الله بن مسعود رضي الله عنه'
+        : isEn
+            ? '— Abdullah ibn Mas\'ud'
+            : '— Абдуллах ибн Мас\'уд';
 
     final quote2Body = isAr
         ? '«كتاب الله، فيه نبأ ما قبلكم، وخبر ما بعدكم، وحكم ما بينكم، وهو الفصل ليس بالهزل».'
-        : '«Коран — это Книга Аллаха. В ней — вести о том, что было до вас, предсказания о том, что будет после вас, и судейство между вами. Она — различение, а не забава».';
+        : isEn
+            ? '“The Book of Allah contains news of what came before you, tidings of what will come after you, and judgment for what is between you. It is the decisive word, not amusement.”'
+            : '«Коран — это Книга Аллаха. В ней — вести о том, что было до вас, предсказания о том, что будет после вас, и судейство между вами. Она — различение, а не забава».';
 
-    final quote2Author =
-        isAr ? '— علي بن أبي طالب رضي الله عنه' : '— Али ибн Абу Талиб';
+    final quote2Author = isAr
+        ? '— علي بن أبي طالب رضي الله عنه'
+        : isEn
+            ? '— Ali ibn Abi Talib'
+            : '— Али ибн Абу Талиб';
 
-    final title = isAr ? 'عن فضل القرآن' : 'О достоинстве Корана';
-    final subtitle =
-        isAr ? 'من أقوال الصحابة الكرام' : 'Жемчужины мудрости сподвижников';
-    final closeBtnLabel = isAr ? 'إغلاق' : 'Закрыть';
+    final title = isAr
+        ? 'عن فضل القرآن'
+        : isEn
+            ? 'Virtues of the Holy Quran'
+            : 'О достоинстве Корана';
+    final subtitle = isAr
+        ? 'من أقوال الصحابة الكرام'
+        : isEn
+            ? 'Pearls of Wisdom from the Companions'
+            : 'Жемчужины мудрости сподвижников';
+    final closeBtnLabel = isAr
+        ? 'إغلاق'
+        : isEn
+            ? 'Close'
+            : 'Закрыть';
 
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
