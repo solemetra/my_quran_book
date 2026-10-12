@@ -143,10 +143,10 @@ class S {
       ? 'شارك التطبيق مع أهلك وأصدقائك'
       : (isEn ? 'Share app with family and friends' : 'Рассказать о приложении близким');
   String get shareAppMessage => isAr
-      ? 'تطبيق القرآن الكريم HD لقراءة القرآن الكريم بدون إنترنت وبدون إعلانات:\nhttps://appgallery.huawei.com/app/C119285551'
+      ? 'تطبيق القرآن الكريم HD لقراءة القرآن الكريم بدون إنترنت وبدون إعلانات:\nhttps://appgallery.cloud.huawei.com/ag/n/app/C119285551'
       : (isEn
-          ? 'Quran HD — clean offline Quran reading app without ads:\nhttps://appgallery.huawei.com/app/C119285551'
-          : 'Коран HD — удобное чтение Корана без интернета и рекламы:\nhttps://appgallery.huawei.com/app/C119285551');
+          ? 'Quran HD — clean offline Quran reading app without ads:\nhttps://appgallery.cloud.huawei.com/ag/n/app/C119285551'
+          : 'Коран HD — удобное чтение Корана без интернета и рекламы:\nhttps://appgallery.cloud.huawei.com/ag/n/app/C119285551');
 
   // ── Reading Stats ──
   String get readingStats =>
