@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_positional_boolean_parameters (ok for one param)
 
 import 'dart:async';
-import 'dart:ui' show FontWeight;
+import 'dart:ui' show FontWeight, PlatformDispatcher;
 
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:my_quran/app/models.dart';
@@ -20,10 +20,15 @@ class SettingsService {
 
   Future<String> loadLanguage() async {
     final language = await _prefs.getString('language');
-    if (language == null || (language != 'ru' && language != 'en')) {
+    if (language != null && (language == 'ru' || language == 'en')) {
+      return language;
+    }
+    // Auto-detect from system locale on fresh install
+    final systemLocale = PlatformDispatcher.instance.locale.languageCode.toLowerCase();
+    if (systemLocale == 'ru' || systemLocale == 'be' || systemLocale == 'kk' || systemLocale == 'uk') {
       return 'ru';
     }
-    return language;
+    return 'en';
   }
 
   Future<void> setFontFamily(FontFamily fontFamily) async {

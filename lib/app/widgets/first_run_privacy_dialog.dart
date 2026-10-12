@@ -4,16 +4,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../design_tokens.dart';
 import '../l10n.dart';
+import '../settings_controller.dart';
 
 /// Dialog shown on the very first launch of the application
 /// in full compliance with Huawei AppGallery Rule 7.5.
-class FirstRunPrivacyDialog extends StatelessWidget {
-  const FirstRunPrivacyDialog({super.key});
+class FirstRunPrivacyDialog extends StatefulWidget {
+  const FirstRunPrivacyDialog({
+    required this.settingsController,
+    super.key,
+  });
+
+  final SettingsController settingsController;
 
   static const String _acceptedKey = 'privacy_policy_accepted_v1';
 
   /// Checks if privacy consent has been granted. If not, shows the dialog.
-  static Future<void> showIfNeeded(BuildContext context) async {
+  static Future<void> showIfNeeded(
+    BuildContext context, {
+    required SettingsController settingsController,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     final accepted = prefs.getBool(_acceptedKey) ?? false;
     if (accepted) return;
@@ -22,13 +31,28 @@ class FirstRunPrivacyDialog extends StatelessWidget {
     await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const FirstRunPrivacyDialog(),
+      builder: (_) => FirstRunPrivacyDialog(
+        settingsController: settingsController,
+      ),
     );
+  }
+
+  @override
+  State<FirstRunPrivacyDialog> createState() => _FirstRunPrivacyDialogState();
+}
+
+class _FirstRunPrivacyDialogState extends State<FirstRunPrivacyDialog> {
+  late String _currentLang;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentLang = widget.settingsController.language;
   }
 
   Future<void> _onAgree(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_acceptedKey, true);
+    await prefs.setBool(FirstRunPrivacyDialog._acceptedKey, true);
     if (context.mounted) {
       Navigator.of(context, rootNavigator: true).pop(true);
     }
@@ -39,9 +63,17 @@ class FirstRunPrivacyDialog extends StatelessWidget {
     SystemNavigator.pop();
   }
 
+  void _setLanguage(String lang) {
+    if (_currentLang == lang) return;
+    setState(() {
+      _currentLang = lang;
+    });
+    widget.settingsController.language = lang;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
+    final s = S(_currentLang);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isAr = s.isAr;
@@ -96,6 +128,7 @@ class FirstRunPrivacyDialog extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
                         width: 48,
@@ -133,6 +166,35 @@ class FirstRunPrivacyDialog extends StatelessWidget {
                                 color: colorScheme.primary,
                                 fontWeight: FontWeight.w600,
                               ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Language switch pills right inside the dialog
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: colorScheme.outlineVariant.withOpacity(0.5),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _langChip(
+                              label: 'RU',
+                              selected: _currentLang == 'ru',
+                              onTap: () => _setLanguage('ru'),
+                              colorScheme: colorScheme,
+                            ),
+                            const SizedBox(width: 2),
+                            _langChip(
+                              label: 'EN',
+                              selected: _currentLang == 'en',
+                              onTap: () => _setLanguage('en'),
+                              colorScheme: colorScheme,
                             ),
                           ],
                         ),
@@ -219,6 +281,34 @@ class FirstRunPrivacyDialog extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _langChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    required ColorScheme colorScheme,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: selected ? colorScheme.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
           ),
         ),
       ),

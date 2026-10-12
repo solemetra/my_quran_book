@@ -121,7 +121,10 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        FirstRunPrivacyDialog.showIfNeeded(context);
+        FirstRunPrivacyDialog.showIfNeeded(
+          context,
+          settingsController: widget.settingsController,
+        );
       }
     });
   }
