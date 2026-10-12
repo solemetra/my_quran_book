@@ -27,6 +27,7 @@ import 'package:my_quran/app/widgets/navigation_sheet.dart';
 import 'package:my_quran/app/widgets/verse_menu_dialog.dart';
 import 'package:my_quran/app/widgets/search_sheet.dart';
 import 'package:my_quran/app/widgets/pinned_header.dart';
+import 'package:my_quran/app/widgets/first_run_privacy_dialog.dart';
 import 'package:my_quran/quran/quran.dart';
 
 class HomePage extends StatefulWidget {
@@ -115,6 +116,12 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
           DateTime.now().difference(_lastInteractionTime).inMinutes < 3;
       if (isAppActive && isRecentInteraction) {
         ReadingStatsService.instance.addReadingTime(15);
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        FirstRunPrivacyDialog.showIfNeeded(context);
       }
     });
   }
