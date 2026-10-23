@@ -18,10 +18,21 @@ class BookmarkService {
   SharedPreferences? _prefs;
   List<VerseBookmark>? _cachedBookmarks;
   List<BookmarkCategory>? _cachedCategories;
+  bool _initialized = false;
 
   Future<SharedPreferences> get _preferences async {
     _prefs ??= await SharedPreferences.getInstance();
     return _prefs!;
+  }
+
+  /// Initializes the service by warming up SharedPreferences and pre-caching
+  /// bookmarks and categories in memory before the UI renders.
+  Future<void> init() async {
+    if (_initialized) return;
+    await _preferences;
+    await getCategories();
+    await getBookmarks();
+    _initialized = true;
   }
 
   // ──────────────────────────────────────────────
@@ -180,6 +191,10 @@ class BookmarkService {
     if (_cachedBookmarks != null) return _cachedBookmarks!;
     final raw = _prefs?.getString(_bookmarksKey);
     if (raw == null) {
+      if (_prefs == null) {
+        // SharedPreferences not ready yet: do NOT poison cache with empty list
+        return const [];
+      }
       _cachedBookmarks = [];
       return _cachedBookmarks!;
     }
