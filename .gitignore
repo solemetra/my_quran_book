@@ -50,3 +50,8 @@ app.*.map.json
 android/key.properties
 android/app/*.jks
 /debug-
+
+# Release binary artifacts
+*.apk
+*.aab
+store_screenshots/

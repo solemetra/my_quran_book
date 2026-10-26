@@ -1,52 +1,95 @@
 <div align="center">
 
-  <img src="fastlane/metadata/android/en-US/images/icon.png" alt="Logo" width="120" height="120">
+  <img src="fastlane/metadata/android/en-US/images/icon.png" alt="Коран HD Logo" width="120" height="120">
   <br>
 
-  # Коран HD
+  # Коран HD (Tablet Edition)
 
-  Лицензия: [GNU GPL v3](LICENSE) • Репозиторий: [solemetra/my_quran_book](https://github.com/solemetra/my_quran_book)
+  **Современное, быстрое и полностью автономное приложение для чтения Священного Корана, оптимизированное для планшетов и устройств с большими экранами.**
+
+  [![Лицензия](https://img.shields.io/badge/Лицензия-GNU%20GPL%20v3-green.svg)](LICENSE)
+  [![Платформа](https://img.shields.io/badge/Платформа-Android-blue.svg)](https://developer.android.com)
+  [![AppGallery](https://img.shields.io/badge/Huawei-AppGallery-red.svg)](https://appgallery.cloud.huawei.com/ag/n/app/C119285551)
+  [![Версия](https://img.shields.io/badge/Версия-1.0.2%20(Build%203)-emerald.svg)](https://github.com/solemetra/my_quran_book/releases)
 
 </div>
 
 ---
 
-## О приложении
+## 📖 О приложении
 
-Быстрое, удобное и полностью автономное приложение для чтения Священного Корана на планшетах и смартфонах:
+**Коран HD (Tablet Edition)** разработано с акцентом на комфортное ежедневное чтение на больших дисплеях планшетов. Приложение передает эстетику классического печатного мединского мусхафа с кристальной четкостью шрифтов и поддержкой горизонтального и вертикального режимов.
 
-- **100% Офлайн**: не требует интернета, без рекламы и без аналитики.
-- **Риваяты**: Хафс и Варш (шрифты Медина и Усмани).
-- **Навигация**: Сура → Джуз → Аят с быстрым переходом.
-- **Статистика и Хатм**: учет времени чтения, серий дней и прогресса завершения Корана с дуа.
-- **Закладки и заметки**: гибкие категории с цветными метками и локальный экспорт/импорт.
-- **Адаптивный интерфейс**: Material You (M3 Expressive), фирменная изумрудная тема, сепия, AMOLED-режим и плавная прокрутка 120 FPS.
+### ✨ Основные возможности
+
+* 📴 **100% Офлайн и приватность:** не требует подключения к интернету, работает без рекламы, без сбора аналитики и трекеров.
+* 🖥️ **Адаптация под планшеты:** великолепно масштабируется под экраны планшетов (альбомный разворот и портретный книжный режим).
+* 🔖 **Продвинутая система закладок:**
+  * **Центральная закладка Хатма:** закрепление страницы текущего чтения с быстрым переходом из навигации.
+  * **Категории закладок:** организация по темам (*Общее*, *Заучивание*, *Повторение*, *Тафсир*) с цветными метками и сохранением между сессиями.
+* 📊 **Хатм и статистика чтения:** отслеживание времени чтения сегодня, серий непрерывных дней (streak) и общего прогресса Хатма (из 604 страниц).
+* 🧭 **Удобная навигация на русском языке:** мгновенный переход: Сура → Джуз → Аят или номер страницы, с отображением русских названий сур и перевода их значений.
+* 🎨 **Темы и персонализация (Material 3):**
+  * Режим «Сепия» с теплым бумажным оттенком для комфорта глаз.
+  * Тёмная тема (AMOLED) для чтения при слабом освещении.
+  * Режим предотвращения засыпания экрана во время чтения.
+  * Высокая производительность и плавная анимация (до 120 FPS).
 
 ---
 
-## Build from source
+## 📸 Скриншоты (Версия для планшетов)
+
+### Альбомный режим (Планшет)
+<div align="center">
+  <img src="screenshots/03_reading_landscape.png" alt="Чтение в альбомном режиме" width="100%" />
+</div>
+
+<br>
+
+### Портретный режим и интерфейс
+<div align="center">
+
+| Режим чтения | Навигация по сурам | Настройки и Хатм | Закладки |
+|:---:|:---:|:---:|:---:|
+| <img src="screenshots/01_reading_portrait.png" width="220" /> | <img src="screenshots/02_navigation.png" width="220" /> | <img src="screenshots/04_settings_stats.png" width="220" /> | <img src="screenshots/05_bookmarks.png" width="220" /> |
+
+</div>
+
+---
+
+## 📥 Установка
+
+* **Huawei AppGallery:** [Коран HD в AppGallery](https://appgallery.cloud.huawei.com/ag/n/app/C119285551)
+* **Прямая установка APK:** скачайте актуальный универсальный APK-файл из раздела [Releases](https://github.com/solemetra/my_quran_book/releases).
+
+---
+
+## 🛠️ Сборка из исходников
+
+Для сборки проекта требуется установленный [Flutter SDK](https://flutter.dev) (3.x+):
 
 ```bash
+# Клонирование репозитория
 git clone https://github.com/solemetra/my_quran_book.git
 cd my_quran_book
+
+# Загрузка зависимостей
 flutter pub get
+
+# Запуск в режиме разработки
 flutter run
+
+# Сборка релизного APK
+flutter build apk --release
+
+# Сборка релизного AppBundle (AAB) для магазинов
+flutter build appbundle --release
 ```
 
 ---
 
-## Legal
+## 📜 Лицензия и авторские права
 
-- **Software**: [GNU General Public License v3](LICENSE) — you may use, modify, and redistribute under GPL terms.
-- **Third-party fonts and Quran data**: see [NOTICE.md](NOTICE.md) (KFGQPC fonts, Scheherazade, etc.).
-- **Copyright**: see [COPYRIGHT.md](COPYRIGHT.md).
-
----
-
-<div align="center">
-
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/0-reading.png" width="200" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1-navigation.png" width="200" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2-appearance.png" width="200" />
-
-</div>
+* **Кодовая база:** распространяется под свободной лицензией [GNU General Public License v3](LICENSE).
+* **Шрифты и коранический текст:** шрифты KFGQPC (Комплекс имени Короля Фахда по изданию Священного Корана), подробнее см. [NOTICE.md](NOTICE.md).
+* **Авторское право:** см. [COPYRIGHT.md](COPYRIGHT.md).
