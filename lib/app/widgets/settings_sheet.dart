@@ -14,6 +14,7 @@ import 'package:my_quran/app/widgets/khatm_celebration_dialog.dart';
 import 'package:my_quran/app/widgets/quran_wisdom_dialog.dart';
 import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
 import 'package:my_quran/quran/quran.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 
 class SettingsSheet extends StatelessWidget {
@@ -307,67 +308,73 @@ class SettingsSheet extends StatelessWidget {
                   ],
                 ),
 
-                _groupTile(
-                  context: context,
-                  key: const PageStorageKey('settings_group_about_app'),
-                  icon: Icons.info_outline_rounded,
-                  title: s.aboutApp,
-                  subtitle: '${s.appName} • v1.0.0 (10)',
-                  children: [
-                    InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => _openEasterEgg(context, isAr),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.menu_book_rounded,
-                              size: 24,
-                              color: colorScheme.primary,
+                FutureBuilder<PackageInfo>(
+                  future: PackageInfo.fromPlatform(),
+                  builder: (context, snapshot) {
+                    final versionStr = snapshot.hasData
+                        ? 'v${snapshot.data!.version} (${snapshot.data!.buildNumber})'
+                        : 'v1.0.2 (3)';
+                    return _groupTile(
+                      context: context,
+                      key: const PageStorageKey('settings_group_about_app'),
+                      icon: Icons.info_outline_rounded,
+                      title: s.aboutApp,
+                      subtitle: '${s.appName} • $versionStr',
+                      children: [
+                        InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => _openEasterEgg(context, isAr),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.menu_book_rounded,
+                                  size: 24,
+                                  color: colorScheme.primary,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        s.appName,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            s.appName,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            versionStr,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(height: 2),
                                       Text(
-                                        'v1.0.0 (10)',
+                                        s.appDescription,
                                         style: TextStyle(
-                                          fontSize: 13,
+                                          fontSize: 12,
                                           color: colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    s.appDescription,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
                     const _ThinDivider(),
                     ListTile(
                       leading: Icon(
@@ -405,6 +412,8 @@ class SettingsSheet extends StatelessWidget {
                       },
                     ),
                   ],
+                );
+                  },
                 ),
               ],
             );
