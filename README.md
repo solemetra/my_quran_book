@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="fastlane/metadata/android/en-US/images/icon.png" alt="Коран HD Logo" width="120" height="120">
+  <img src="assets/icon-cricle.png" alt="Коран HD Logo" width="130" height="130">
   <br>
 
   # Коран HD (Tablet Edition)

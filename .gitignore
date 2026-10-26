@@ -55,3 +55,4 @@ android/app/*.jks
 *.apk
 *.aab
 store_screenshots/
+app_icon_*.png
