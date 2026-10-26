@@ -1,3 +1,4 @@
+import 'package:my_quran/app/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -112,12 +113,12 @@ class _FirstRunPrivacyDialogState extends State<FirstRunPrivacyDialog> {
                 color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(32),
                 border: Border.all(
-                  color: colorScheme.primary.withOpacity(0.28),
+                  color: colorScheme.primary.applyOpacity(0.28),
                   width: 1.4,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.16),
+                    color: Colors.black.applyOpacity(0.16),
                     blurRadius: 28,
                     offset: const Offset(0, 10),
                   ),
@@ -177,7 +178,7 @@ class _FirstRunPrivacyDialogState extends State<FirstRunPrivacyDialog> {
                           color: colorScheme.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: colorScheme.outlineVariant.withOpacity(0.5),
+                            color: colorScheme.outlineVariant.applyOpacity(0.5),
                           ),
                         ),
                         child: Row(

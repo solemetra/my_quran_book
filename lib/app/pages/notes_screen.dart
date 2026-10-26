@@ -351,8 +351,10 @@ class _NotesScreenState extends State<NotesScreen> {
         final fontFamilyName = widget.settingsController?.fontFamily.name ??
             FontFamily.hafs.name;
 
-        return Card(
-          elevation: 0,
+        return Md3SpringAppear(
+          delay: Duration(milliseconds: (i.clamp(0, 8)) * 35),
+          child: Card(
+            elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: AppShapes.borderMedium,
             side: BorderSide(
@@ -497,7 +499,8 @@ class _NotesScreenState extends State<NotesScreen> {
               ),
             ),
           ),
-        );
+        ),
+      );
       },
     );
   }

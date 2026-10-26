@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/l10n.dart';
+import 'package:my_quran/app/design_tokens.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({super.key});
@@ -45,10 +46,11 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
             ? const Center(child: CircularProgressIndicator())
             : _categories.isEmpty
             ? Center(child: Text(s.noCategories))
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: _categories.length,
-                itemBuilder: (context, index) {
+            : AdaptiveContent(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _categories.length,
+                  itemBuilder: (context, index) {
                   final cat = _categories[index];
                   final isDefault = cat.id == 'default';
                   return ListTile(
@@ -81,6 +83,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                   );
                 },
               ),
+            ),
       ),
     );
   }

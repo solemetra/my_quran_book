@@ -7,6 +7,8 @@ import 'package:my_quran/app/l10n.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/ribbon_bookmark_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
+import 'package:my_quran/app/design_tokens.dart';
+import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/quran/quran.dart';
 
 class QuranNavigationBottomSheet extends StatefulWidget {
@@ -111,7 +113,7 @@ class _QuranNavigationBottomSheetState
         _juzController.animateToItem(
           _currentJuz - 1,
           duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
+          curve: Curves.easeOutCubic,
         );
       }
       if (_verseController.hasClients) {
@@ -140,7 +142,7 @@ class _QuranNavigationBottomSheetState
         _surahController.animateToItem(
           _currentSurah - 1,
           duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
+          curve: Curves.easeOutCubic,
         );
       }
       if (_verseController.hasClients) {
@@ -167,7 +169,7 @@ class _QuranNavigationBottomSheetState
         _juzController.animateToItem(
           _currentJuz - 1,
           duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
+          curve: Curves.easeOutCubic,
         );
       }
       setState(() {});
@@ -181,11 +183,12 @@ class _QuranNavigationBottomSheetState
     final colorScheme = Theme.of(context).colorScheme;
 
     return SafeArea(
-      child: Container(
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
+      child: AdaptiveContent(
+        child: Container(
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.vertical(top: AppShapes.radiusExtraLarge),
+          ),
+          child: Column(
           children: [
             const SizedBox(height: 12),
             Container(
@@ -207,12 +210,14 @@ class _QuranNavigationBottomSheetState
                 textDirection: s.isAr ? TextDirection.rtl : TextDirection.ltr,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: s.isAr ? 24 : 20,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
-                  fontFamily: s.isAr ? FontFamily.hafs.name : null,
-                ),
+                style: (s.isAr
+                        ? Theme.of(context).textTheme.headlineSmall
+                        : Theme.of(context).textTheme.titleLarge)
+                    ?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                      fontFamily: s.isAr ? FontFamily.hafs.name : null,
+                    ),
               ),
             ),
             const SizedBox(height: 8),
@@ -234,6 +239,10 @@ class _QuranNavigationBottomSheetState
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: ActionChip(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     avatar: Icon(
                       Icons.bookmark_rounded,
                       size: 16,
@@ -248,10 +257,10 @@ class _QuranNavigationBottomSheetState
                       ),
                     ),
                     side: BorderSide(
-                      color: colorScheme.primary.withOpacity(0.3),
+                      color: colorScheme.primary.applyOpacity(0.3),
                     ),
                     backgroundColor:
-                        colorScheme.primaryContainer.withOpacity(0.35),
+                        colorScheme.primaryContainer.applyOpacity(0.35),
                     onPressed: () {
                       final first =
                           pageData.isNotEmpty ? pageData.first : null;
@@ -276,7 +285,7 @@ class _QuranNavigationBottomSheetState
                       margin: const EdgeInsets.only(top: 26, left: 12, right: 12),
                       decoration: BoxDecoration(
                         color: colorScheme.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: AppShapes.borderMedium,
                       ),
                     ),
                   ),
@@ -353,7 +362,8 @@ class _QuranNavigationBottomSheetState
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildFlatWheel({
@@ -401,7 +411,7 @@ class _QuranNavigationBottomSheetState
                     controller.animateToItem(
                       index,
                       duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
+                      curve: Curves.easeOutCubic,
                     );
                   },
                   child: itemBuilder(index),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_quran/app/design_tokens.dart';
 import 'package:my_quran/app/models.dart';
 
 const _seedColor = Color(0xFF0F766E);
@@ -57,11 +58,7 @@ ThemeData _buildMyQuranLight() {
     outline: const Color(0xFF6F7976),
     outlineVariant: const Color(0xFFBEC9C5),
   );
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: colorScheme,
-    scaffoldBackgroundColor: colorScheme.surface,
-  );
+  return _applyExpressiveTheme(colorScheme);
 }
 
 ThemeData _buildMyQuranDark() {
@@ -80,11 +77,7 @@ ThemeData _buildMyQuranDark() {
     outline: const Color(0xFF899390),
     outlineVariant: const Color(0xFF3F4946),
   );
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: colorScheme,
-    scaffoldBackgroundColor: colorScheme.surface,
-  );
+  return _applyExpressiveTheme(colorScheme);
 }
 
 ThemeData _buildDynamicLight(ColorScheme? deviceScheme) {
@@ -94,11 +87,7 @@ ThemeData _buildDynamicLight(ColorScheme? deviceScheme) {
     secondary: deviceScheme?.secondary,
     tertiary: deviceScheme?.tertiary,
   );
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: colorScheme,
-    scaffoldBackgroundColor: colorScheme.surface,
-  );
+  return _applyExpressiveTheme(colorScheme);
 }
 
 ThemeData _buildDynamicDark(ColorScheme? deviceScheme) {
@@ -109,11 +98,7 @@ ThemeData _buildDynamicDark(ColorScheme? deviceScheme) {
     secondary: deviceScheme?.secondary,
     tertiary: deviceScheme?.tertiary,
   );
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: colorScheme,
-    scaffoldBackgroundColor: colorScheme.surface,
-  );
+  return _applyExpressiveTheme(colorScheme);
 }
 
 const _sepiaSeed = Color(0xFF7A5A3A);
@@ -144,11 +129,7 @@ ThemeData _buildSepiaLight() {
     outlineVariant: const Color(0xFFD7C7B7),
   );
 
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: colorScheme,
-    scaffoldBackgroundColor: colorScheme.surface,
-  );
+  return _applyExpressiveTheme(colorScheme);
 }
 
 ThemeData _buildSepiaDark() {
@@ -171,9 +152,40 @@ ThemeData _buildSepiaDark() {
     outlineVariant: const Color(0xFF5D4C41),
   );
 
+  return _applyExpressiveTheme(colorScheme);
+}
+
+ThemeData _applyExpressiveTheme(ColorScheme colorScheme) {
   return ThemeData(
     useMaterial3: true,
     colorScheme: colorScheme,
     scaffoldBackgroundColor: colorScheme.surface,
+    cardTheme: const CardTheme(
+      shape: AppShapes.shapeLarge,
+      elevation: 0,
+      margin: EdgeInsets.zero,
+    ),
+    dialogTheme: const DialogTheme(
+      shape: AppShapes.shapeLarge,
+      elevation: 3,
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: AppShapes.radiusExtraLarge),
+      ),
+      showDragHandle: false,
+    ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      shape: AppShapes.stadium,
+      elevation: 2,
+      focusElevation: 4,
+      hoverElevation: 4,
+      highlightElevation: 4,
+    ),
+    segmentedButtonTheme: const SegmentedButtonThemeData(
+      style: ButtonStyle(
+        shape: WidgetStatePropertyAll(AppShapes.stadium),
+      ),
+    ),
   );
 }

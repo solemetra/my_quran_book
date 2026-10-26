@@ -36,6 +36,30 @@ abstract final class AppShapes {
   static const StadiumBorder stadium = StadiumBorder();
 }
 
+/// Material Design 3 Spacing & Layout Tokens
+abstract final class AppSpacing {
+  /// 4dp - Micro spacing, badge padding
+  static const double xs = 4;
+
+  /// 8dp - Compact spacing, element gaps
+  static const double sm = 8;
+
+  /// 12dp - Intermediate spacing
+  static const double mdSm = 12;
+
+  /// 16dp - Standard container padding, card gutters
+  static const double md = 16;
+
+  /// 24dp - Section spacing, header margins
+  static const double lg = 24;
+
+  /// 32dp - Hero section gaps
+  static const double xl = 32;
+
+  /// Minimum accessible touch target (48dp per M3 & WCAG 2.1 AAA)
+  static const double touchTarget = 48;
+}
+
 /// M3 Tablet containment token: max content width for comfortable readability
 abstract final class AppLayout {
   static const double maxContentWidth = 840;

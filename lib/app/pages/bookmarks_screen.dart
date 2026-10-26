@@ -135,9 +135,14 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 8),
                               itemBuilder: (context, index) {
-                                return _buildBookmarkCard(
-                                  context,
-                                  filtered[index],
+                                return Md3SpringAppear(
+                                  delay: Duration(
+                                    milliseconds: (index.clamp(0, 8)) * 35,
+                                  ),
+                                  child: _buildBookmarkCard(
+                                    context,
+                                    filtered[index],
+                                  ),
                                 );
                               },
                             ),
@@ -318,7 +323,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         padding: isAr ? const EdgeInsets.only(left: 24) : const EdgeInsets.only(right: 24),
         decoration: BoxDecoration(
           color: colorScheme.errorContainer,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppShapes.borderMedium,
         ),
         child: Icon(Icons.delete_outline, color: colorScheme.onErrorContainer),
       ),

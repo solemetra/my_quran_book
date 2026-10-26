@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:my_quran/app/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:my_quran/app/design_tokens.dart';
 
@@ -34,7 +35,7 @@ class SmoothTypewriter extends StatelessWidget {
             TextSpan(
               text: text[full],
               style: TextStyle(
-                color: effectiveColor.withOpacity(
+                color: effectiveColor.applyOpacity(
                   (typed - full).clamp(0.0, 1.0),
                 ),
               ),
@@ -247,17 +248,17 @@ class _QuranWisdomEasterEggDialogState
                 color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(32),
                 border: Border.all(
-                  color: colorScheme.primary.withOpacity(0.32),
+                  color: colorScheme.primary.applyOpacity(0.32),
                   width: 1.4,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.24),
+                    color: Colors.black.applyOpacity(0.24),
                     blurRadius: 36,
                     offset: const Offset(0, 12),
                   ),
                   BoxShadow(
-                    color: colorScheme.primary.withOpacity(0.12),
+                    color: colorScheme.primary.applyOpacity(0.12),
                     blurRadius: 28,
                     spreadRadius: 1,
                   ),
@@ -285,7 +286,7 @@ class _QuranWisdomEasterEggDialogState
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: colorScheme.primary.withOpacity(0.38),
+                              color: colorScheme.primary.applyOpacity(0.38),
                               blurRadius: 22,
                               offset: const Offset(0, 6),
                             ),
@@ -334,7 +335,7 @@ class _QuranWisdomEasterEggDialogState
                         color: colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
-                          color: colorScheme.outlineVariant.withOpacity(0.4),
+                          color: colorScheme.outlineVariant.applyOpacity(0.4),
                           width: 1,
                         ),
                       ),
@@ -398,7 +399,7 @@ class _QuranWisdomEasterEggDialogState
                                   Expanded(
                                     child: Divider(
                                       color: colorScheme.outlineVariant
-                                          .withOpacity(0.5),
+                                          .applyOpacity(0.5),
                                       thickness: 0.8,
                                     ),
                                   ),
@@ -412,7 +413,7 @@ class _QuranWisdomEasterEggDialogState
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
                                         color: colorScheme.primary
-                                            .withOpacity(0.7),
+                                            .applyOpacity(0.7),
                                         letterSpacing: 1.5,
                                       ),
                                     ),
@@ -420,7 +421,7 @@ class _QuranWisdomEasterEggDialogState
                                   Expanded(
                                     child: Divider(
                                       color: colorScheme.outlineVariant
-                                          .withOpacity(0.5),
+                                          .applyOpacity(0.5),
                                       thickness: 0.8,
                                     ),
                                   ),

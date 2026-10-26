@@ -451,8 +451,8 @@ class _SilkRibbonHeaderButton extends StatelessWidget {
         final iconColor = isOnThisPage
             ? colorScheme.primary
             : (hasRibbonElsewhere
-                ? colorScheme.primary.withOpacity(0.75)
-                : colorScheme.onSurfaceVariant.withOpacity(0.4));
+                ? colorScheme.primary.applyOpacity(0.75)
+                : colorScheme.onSurfaceVariant.applyOpacity(0.4));
 
         final iconData = isOnThisPage
             ? Icons.bookmark_rounded

@@ -37,7 +37,7 @@ class SettingsSheet extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(12, 16, 12, 20),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: AppShapes.borderLarge,
             color: context.colorScheme.surfaceContainer,
           ),
           child: ListenableBuilder(
@@ -322,7 +322,7 @@ class SettingsSheet extends StatelessWidget {
                       subtitle: '${s.appName} • $versionStr',
                       children: [
                         InkWell(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: AppShapes.borderMedium,
                           onTap: () => _openEasterEgg(context, isAr),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -439,7 +439,7 @@ class SettingsSheet extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppShapes.borderLarge,
       ),
       clipBehavior: Clip.antiAlias,
       child: Theme(
@@ -996,7 +996,7 @@ class _ReadingStatsCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: AppShapes.borderLarge,
             border: Border.all(
               color: colorScheme.outlineVariant,
             ),
@@ -1022,21 +1022,21 @@ class _ReadingStatsCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   if (stats.khatmPagesCount > 0)
-                    InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: () => _showResetKhatmDialog(context),
-                      child: Padding(
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 12,
+                          vertical: 8,
                         ),
-                        child: Text(
-                          s.resetKhatm,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      ),
+                      onPressed: () => _showResetKhatmDialog(context),
+                      child: Text(
+                        s.resetKhatm,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -1198,7 +1198,7 @@ class _MetricTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppShapes.borderMedium,
       ),
       child: Column(
         children: [

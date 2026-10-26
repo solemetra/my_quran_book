@@ -122,12 +122,12 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
               color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(32),
               border: Border.all(
-                color: colorScheme.outlineVariant.withOpacity(0.5),
+                color: colorScheme.outlineVariant.applyOpacity(0.5),
                 width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
+                  color: Colors.black.applyOpacity(0.18),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
@@ -145,7 +145,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                       vertical: 9,
                     ),
                     decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer.withOpacity(0.85),
+                      color: colorScheme.primaryContainer.applyOpacity(0.85),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -174,7 +174,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                   Container(
                     width: 1.2,
                     height: 26,
-                    color: colorScheme.outlineVariant.withOpacity(0.6),
+                    color: colorScheme.outlineVariant.applyOpacity(0.6),
                   ),
                   const SizedBox(width: 8),
 
@@ -201,7 +201,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                     ),
                     label: s.bookmark,
                     backgroundColor: isBookmarked
-                        ? bookmarkColor.withOpacity(0.16)
+                        ? bookmarkColor.applyOpacity(0.16)
                         : null,
                     foregroundColor: isBookmarked ? bookmarkColor : null,
                     onTap: () => _openBookmarkPicker(context),
@@ -221,7 +221,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                     ),
                     label: s.note,
                     backgroundColor: _hasNotes
-                        ? colorScheme.primaryContainer.withOpacity(0.4)
+                        ? colorScheme.primaryContainer.applyOpacity(0.4)
                         : null,
                     foregroundColor: _hasNotes ? colorScheme.primary : null,
                     badgeCount: _hasNotes ? _verseNotes.length : null,
@@ -231,7 +231,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                   Container(
                     width: 1.2,
                     height: 26,
-                    color: colorScheme.outlineVariant.withOpacity(0.6),
+                    color: colorScheme.outlineVariant.applyOpacity(0.6),
                   ),
                   const SizedBox(width: 6),
 

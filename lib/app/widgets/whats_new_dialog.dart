@@ -2,6 +2,7 @@
 // Run: dart run scripts/update_whats_new.dart
 // Version: 1.7.6
 
+import 'package:my_quran/app/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -616,7 +617,7 @@ class _CategorySection extends StatelessWidget {
                 width: 30,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.applyOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, size: 18, color: color),

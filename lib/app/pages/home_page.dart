@@ -889,8 +889,8 @@ class _PageEndDivider extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    colorScheme.outlineVariant.withOpacity(0.0),
-                    colorScheme.primary.withOpacity(0.4),
+                    colorScheme.outlineVariant.applyOpacity(0.0),
+                    colorScheme.primary.applyOpacity(0.4),
                   ],
                 ),
               ),
@@ -916,7 +916,7 @@ class _PageEndDivider extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.85),
+                    color: colorScheme.onSurfaceVariant.applyOpacity(0.85),
                     fontFamily: isAr
                         ? FontFamily.arabicNumbersFontFamily.name
                         : null,
@@ -940,8 +940,8 @@ class _PageEndDivider extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    colorScheme.primary.withOpacity(0.4),
-                    colorScheme.outlineVariant.withOpacity(0.0),
+                    colorScheme.primary.applyOpacity(0.4),
+                    colorScheme.outlineVariant.applyOpacity(0.0),
                   ],
                 ),
               ),
